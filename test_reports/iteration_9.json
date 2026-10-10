@@ -1,0 +1,25 @@
+{
+  "summary": "Iteration 32 tested the 3 requested features: (1) welcome email contains Username+Password awal credentials box (email_html/email_text) and passes _assert_safe_email; (2) Client dashboard shows 4 ticket KPIs (Total tiket / Open / In Progress / Selesai / Closed) and hides 'Progres project' + 'Status project' charts, while Admin/Developer/Accounting dashboards remain unchanged with both charts; (3) notification_delivery.deliver_notifications → when user WA send raises, alert_admins sends to admin email (via ADMIN_EMAIL env and non-example admin users) + admin WhatsApp (via ADMIN_WHATSAPP_NUMBER + admin user numbers) with failure reason and original message content; silent on success. GET /api/dashboard returns ticket_stats only for Client role. POST /api/users returns default_password '12345678' and POST /api/clients still succeeds (email/WA deliveries skipped since EMAIL_ENABLED=false/WHATSAPP_ENABLED=false in preview; no backend errors). Backend pytest: 9 passed / 0 failed. Frontend playwright: all client/admin/developer/accounting flows green.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter32_welcome_dashboard_alerts.py",
+    "/app/test_reports/pytest/iter32.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "administration.send_welcome correctly passes credentials=[('Username',..),('Password awal',12345678)] into notify external payload so email_html renders the credentials box AND email_text + whatsapp_text include the username/password. WA message now mirrors email (as required). Nice symmetry.",
+    "notification_delivery.alert_admins: admin_contacts() dedupes by email/phone and seeds env ADMIN_EMAIL/ADMIN_WHATSAPP_NUMBER via setdefault — robust. example_email() filter correctly excludes seed admin@maiharta.example so test preview won't spam fake addresses.",
+    "alert_admins uses attempt() with the admin send and persists a notification_deliveries row for each admin fan-out, including skipped reason when channel is misconfigured — good observability.",
+    "Dashboard.jsx: isClient && ticketKpis gates both the 4-KPI swap AND the entire charts section (via !isClient && <div className='dashboard-grid'>). KPI data-testid dashboard-kpi-0..3 preserved. 'Project terkini', 'Aktivitas terbaru', 'Deadline terdekat' still render for Client.",
+    "Minor: alert_admins swallows per-channel failure silently (no retry/backoff) — acceptable because any failure here is already an admin alert and we don't want infinite loops; worth logging a WARN with the admin channel too for ops."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter32_welcome_dashboard_alerts.py"],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100% (6/6 role checks)"},
+  "test_credentials": "admin/developer/accounting/client all with password Maiharta2026!; captcha is math; captcha_answer must be string",
+  "seed_data_creation": "Created TEST_<timestamp> Developer user and TEST_CLI_<timestamp> client — both cleaned up in test_cleanup fixture. In-process alert test inserts/deletes transient user rows via docstore.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "For in-process async tests against docstore (MySQL), use a single shared event loop (asyncio.new_event_loop() + loop.run_until_complete) instead of asyncio.run() between tests — otherwise aiomysql pool rebinds to a closed loop ('Event loop is closed'). Also, to exercise alert_admins email path, override ADMIN_EMAIL env to a non-example domain since example_email() filters out *.example addresses (seed admin uses admin@maiharta.example).",
+  "rca of the issue": "N/A — all three features behave as specified. Only self-inflicted test issues (initial REACT_APP_BACKEND_URL missing from backend env, asyncio.run() loop closure, example_email filtering ADMIN_EMAIL) which were fixed in the test file."
+}

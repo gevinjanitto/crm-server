@@ -1,0 +1,20 @@
+{
+  "summary": "Short regression per request. (1) Static check of /app/deploy/docker-compose.yml: file is valid YAML; services unchanged (mysql, backend, web, n8n, waha, cron); n8n service environment now includes N8N_LISTEN_ADDRESS: 0.0.0.0 alongside N8N_PORT: 5678 (fix for IPv6-disabled VPS where n8n defaulted to '::' and failed to bind). No other service block was modified. (2) Caddyfile still reverse-proxies n8n:5678 unchanged, so forcing IPv4 listen does not break the proxy (Docker's embedded DNS resolves 'n8n' to the container's IPv4 address on the compose network). (3) Preview backend regression: GET /api/health -> 200 {\"status\":\"ok\"}; GET /api/auth/captcha -> 200 (math captcha); POST /api/auth/login with admin / <SEED_PASSWORD> + solved captcha -> 200 with JWT. No code outside deploy/docker-compose.yml was changed, so the prior 33/33 e2e pass (iteration_1) still applies. Docker not available in container, so no live n8n start was attempted (as instructed).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_mysql_e2e.py", "/app/test_reports/pytest/mysql_e2e.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "docker-compose.yml n8n block: N8N_LISTEN_ADDRESS=0.0.0.0 is the correct fix for the reported bind error on an IPv6-disabled host (n8n default listen address is '::'). This matches n8n docs.",
+    "Consider also setting N8N_WORKER_SERVER_ADDRESS=0.0.0.0 only if queue-mode workers are added later; not needed for current single-process setup.",
+    "Optional hardening: pin n8n image tag (currently :latest) to a known-good version for reproducible deploys."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (health + captcha + admin login)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "admin / <SEED_PASSWORD> with math captcha from GET /api/auth/captcha",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Only change since iteration_1 is one env line (N8N_LISTEN_ADDRESS: 0.0.0.0) added to n8n service in /app/deploy/docker-compose.yml. Preview app is MySQL-backed and healthy. Full e2e suite at /app/backend/tests/test_mysql_e2e.py (33 tests) remains the regression entry point.",
+  "rca of the issue": "n8n >=1.x defaults N8N_LISTEN_ADDRESS to '::' (IPv6 any). On an IPv6-disabled VPS (IDCloudHost), bind to '::' fails with EADDRNOTAVAIL -> the exact error reported. Setting N8N_LISTEN_ADDRESS=0.0.0.0 forces IPv4-only bind and resolves the crash loop. Caddy reaches n8n via Docker DNS over the compose bridge (IPv4), so the proxy continues to work."
+}

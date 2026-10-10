@@ -1,0 +1,29 @@
+{
+  "summary": "Backend-only validation of deploy/* IP-mode changes (Caddy IP cert, change-domain.sh IP/domain branches, docker-compose web ports/env, backend notification_config/whatsapp.py config checks, bash -n). All five requested checks pass. One minor issue found in change-domain.sh domain-mode exit code when hostname is unresolvable.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "deploy/change-domain.sh", "issue": "Domain-mode with an UNRESOLVABLE hostname exits 2 (getent returns 2, trips `set -e` before the DNS-check branch prints its message) instead of the designed exit 1 with the PERINGATAN message. .env is left unchanged either way. For a resolvable but mismatched domain (e.g. google.com) exit is correctly 1 with the Indonesian warning. Fix suggestion: `got=\"$(getent ahostsv4 \"$host\" | awk 'NR==1{print $1}' || true)\"` so getent's rc=2 does not short-circuit the loop."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/test_reports/iteration_5.json"],
+  "action_items": [
+    "Optional: make change-domain.sh tolerate getent returning rc=2 so an unresolvable hostname still exits 1 with the Indonesian 'PERINGATAN' message (currently exits 2 with no message). Non-blocking: .env is still untouched and the operator still sees a failure."
+  ],
+  "critical_code_review_comments": [
+    "Caddyfile uses global `default_sni {$SERVER_IP}` + acme profile shortlived + tls-alpn disabled; adapts cleanly in both IP mode (listens :443, :5678, :3000, host matcher IP_SERVER) and domain mode (single :443 server with per-host subroutes). /api/* -> backend:8001 preserved.",
+    "docker-compose.yml valid; web publishes 80, 443, 443/udp, 5678, 3000. backend CORS_ORIGINS and APP_URL both = https://${APP_DOMAIN}; web build arg REACT_APP_BACKEND_URL = https://${APP_DOMAIN}; n8n WEBHOOK_URL = https://${N8N_DOMAIN}/ and N8N_HOST correctly removed.",
+    "setup.sh writes APP_DOMAIN=${IP}, N8N_DOMAIN=${IP}:5678, WAHA_DOMAIN=${IP}:3000 and `ufw allow 5678/tcp` + `ufw allow 3000/tcp`. bash -n passes on both scripts.",
+    "change-domain.sh IP mode: writes APP_DOMAIN=IP, N8N_DOMAIN=IP:5678, WAHA_DOMAIN=IP:3000, rewrites N8N_*_WEBHOOK_URL host while preserving path (/webhook/crm-whatsapp) and leaving the webhook secret untouched; creates .env.bak.<timestamp>; calls `ufw allow 5678/tcp` and `ufw allow 3000/tcp`; updates SERVER_IP when it changes.",
+    "notification_config.https_url() and whatsapp.whatsapp_configuration_error() accept https://IP_SERVER and https://IP_SERVER:5678/webhook/crm-whatsapp (returns '' = OK, whatsapp_configured() True).",
+    "mailer._assert_safe_email() correctly rejects numeric-host https links in email bodies (G3 anti-phishing rule, unchanged, intentional - not a bug)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "n/a"},
+  "test_credentials": "n/a (deploy artefact tests only)",
+  "seed_data_creation": "none; used temp dirs with fake docker/ufw on PATH for change-domain.sh exercising",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Caddy v2.11.7 linux_arm64 binary cached at /tmp/c2/caddy. Validate Caddyfile with: APP_DOMAIN=... N8N_DOMAIN=... WAHA_DOMAIN=... SERVER_IP=... ACME_EMAIL=... /tmp/c2/caddy adapt --config /app/deploy/Caddyfile. Docker is NOT available in this container, do not try to run compose up. Earlier iterations 1-4 covered MySQL 8.4 app tests."
+}

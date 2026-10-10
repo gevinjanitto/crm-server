@@ -1,0 +1,16 @@
+{
+  "summary": "Tested /app/deploy/update.sh via a bash harness using fake docker/git on PATH in /tmp/update_sh_test (no real Docker involved). All 4 requested scenarios passed with 12/12 assertions. Script syntax (bash -n) OK and file is executable.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_update_script.sh"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "update.sh is tight (34 lines). Minor nits (non-blocking): (1) foreground branch uses `exec tail -f`, so callers MUST wrap with timeout and the test harness kills tails explicitly (as noted by main agent). (2) pgrep guard matches on 'update.sh --run' substring; if the deploy dir is ever renamed to contain that string it would misdetect, but acceptable here. (3) `set -euo pipefail` in --run branch is fine because build-failure is captured via explicit if/else so pipefail does not abort before `docker compose up -d`."
+  ],
+  "updated_files": ["/app/backend/tests/test_update_script.sh"],
+  "success_rate": {"backend": "100%", "frontend": "n/a"},
+  "seed_data_creation": "None. Harness is self-contained in /tmp/update_sh_test and cleans up on each run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Harness lives at /app/backend/tests/test_update_script.sh. It stubs docker & git via a fakebin dir prepended to PATH, exercises: (C1) SSH-drop via `timeout 4` on caller while fake build sleeps 6s - verifies detached setsid --run completes with SELESAI and command order git-pull -> compose stop n8n waha -> build backend web -> up -d -> ps; (C2) second invocation while first is running prints 'Update masih berjalan' and does not spawn a duplicate --run; (C3) FAKE_BUILD_FAIL=1 => log ends with BUILD GAGAL, `docker compose up -d` still executed, `--run` exits 1; (C4) FAKE_GIT_FAIL=1 => PERINGATAN printed, build still runs, SELESAI, exit 0. Result: 12/12 PASS. Remember to kill any leftover `tail -f` after running (harness does this via cleanup_tails)."
+}

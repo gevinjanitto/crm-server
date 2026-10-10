@@ -1,0 +1,21 @@
+# Direct runtime dependencies only. Retain the versions used by this application.
+# Regenerate requirements.txt with: bash scripts/lock_backend_requirements.sh
+# Do not freeze the shared development environment into production requirements.
+fastapi==0.110.1
+starlette==0.37.2
+uvicorn==0.25.0
+aiomysql==0.2.0
+PyMySQL==1.1.1
+cryptography==50.0.2
+pydantic==2.13.5
+python-dotenv==1.2.4
+bcrypt==4.1.3
+PyJWT==2.15.1
+python-multipart==0.0.32
+email-validator==2.3.0
+requests==2.34.2
+cloudinary==1.46.2
+bleach==6.4.0
+openpyxl==3.1.5
+python-dateutil==2.9.0.post0
+httpx==0.28.1

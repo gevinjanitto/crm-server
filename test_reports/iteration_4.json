@@ -1,0 +1,71 @@
+{
+  "summary": "Static/functional validation of /app/deploy/change-domain.sh with a fake docker binary on PATH, plus confirmation of the SSL diagnosis against the live IDCloudHost server. 14/14 harness assertions passed; SSL error reproduced as documented. Caddyfile and docker-compose.yml wiring reviewed and consistent with the switch-domain workflow.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "deploy_script_tests": {
+    "happy_path_duckdns": {
+      "input": "bash deploy/change-domain.sh https://example.duckdns.org/",
+      "env_SERVER_IP": "84.249.67.149 (resolved from example.duckdns.org)",
+      "results": {
+        "exit_code_0": true,
+        "scheme_and_trailing_slash_stripped": true,
+        "APP_DOMAIN": "example.duckdns.org (correct)",
+        "N8N_DOMAIN": "n8n.example.duckdns.org (correct)",
+        "WAHA_DOMAIN": "waha.example.duckdns.org (correct)",
+        "N8N_EMAIL_WEBHOOK_URL": "https://n8n.example.duckdns.org/webhook/email-outbound (host rewritten, path preserved)",
+        "N8N_WAHA_WEBHOOK_URL": "https://n8n.example.duckdns.org/webhook/waha-inbound (host rewritten, path preserved)",
+        "N8N_WAHA_WEBHOOK_SECRET_untouched": true,
+        "env_backup_created": ".env.bak.<timestamp> present",
+        "docker_invocation": "docker compose up -d --build web backend n8n (captured by fake docker)"
+      }
+    },
+    "dns_mismatch_google": {
+      "input": "bash deploy/change-domain.sh google.com (SERVER_IP in .env != google IP)",
+      "results": {
+        "exit_code_nonzero": true,
+        "env_unchanged_md5_match": true,
+        "docker_NOT_called": true,
+        "warning_printed": "PERINGATAN: google.com mengarah ke '173.194.210.113', seharusnya 84.249.67.149."
+      }
+    },
+    "assertions": "14 PASS / 0 FAIL"
+  },
+  "ssl_diagnosis_live_check": {
+    "http_80": "curl http://IP_SERVER/ -> HTTP 302 redirect to https://crm.IP-SERVER.sslip.io/ (Caddy up and redirecting correctly)",
+    "https_443": "curl https://crm.IP-SERVER.sslip.io/ -> TLSv1.3 alert internal error (0A000438) during handshake, no server certificate presented",
+    "conclusion": "Diagnosis confirmed: Caddy is reachable on 443 but has no cert for crm.IP-SERVER.sslip.io, consistent with Let's Encrypt rate-limit on sslip.io (not on Public Suffix List). Switching to a DuckDNS or own domain via change-domain.sh is the correct remediation."
+  },
+  "config_wiring_review": {
+    "Caddyfile_env_placeholders": "Caddyfile uses {$APP_DOMAIN}, {$N8N_DOMAIN}, {$WAHA_DOMAIN}, {$SERVER_IP}, {$ACME_EMAIL} - will pick up new domains on container recreate. OK.",
+    "docker_compose_web_build_arg": "web service passes REACT_APP_BACKEND_URL=https://${APP_DOMAIN} as build arg - therefore --build web in the script is required (frontend is baked at build time). OK.",
+    "docker_compose_backend_env": "backend uses CORS_ORIGINS=https://${APP_DOMAIN}, APP_URL=https://${APP_DOMAIN}, N8N_EMAIL_WEBHOOK_URL, N8N_WAHA_WEBHOOK_URL - all re-read on container recreate. OK.",
+    "n8n_env": "N8N_HOST, WEBHOOK_URL, N8N_EDITOR_BASE_URL depend on ${N8N_DOMAIN} - recreated by `up -d n8n`. OK."
+  },
+  "critical_code_review_comments": [
+    "change-domain.sh exit on DNS mismatch happens before backup and sed - good; backup is only created on the happy path (confirmed).",
+    "sed regex `^(N8N_[A-Z]+_WEBHOOK_URL=https://)[^/]+` correctly matches both N8N_EMAIL_WEBHOOK_URL and N8N_WAHA_WEBHOOK_URL while leaving N8N_WAHA_WEBHOOK_SECRET untouched (secret has no `_WEBHOOK_URL=` suffix). Verified.",
+    "Minor: script does not restart `waha` even though WAHA_DOMAIN changed. Caddyfile picks up the new host, but if WAHA ever reads WAHA_DOMAIN from env in future, it won't be refreshed. Current waha service doesn't use WAHA_DOMAIN env, so this is fine today - just document.",
+    "Minor: `grep -E '^SERVER_IP='` + `cut -d= -f2` will mis-handle values containing `=`; fine for an IPv4 but worth noting.",
+    "Minor: script assumes `getent` (glibc). On Alpine-based hosts it may not exist; add a `command -v getent` guard or fallback to `dig +short`.",
+    "Nice-to-have: after `docker compose up -d`, could `sleep 5 && curl -sI https://${BASE}` to tell the user whether a cert was issued."
+  ],
+  "test_report_links": [
+    "/tmp/change_domain_test/run_test.sh",
+    "/app/test_reports/iteration_4.json"
+  ],
+  "updated_files": [],
+  "action_items": [],
+  "success_rate": {"backend": "100% (14/14 script assertions, SSL diagnosis confirmed)", "frontend": "N/A (skipped per request)"},
+  "seed_data_creation": "None. A disposable work dir under /tmp/change_domain_test/work with a synthetic .env and a fake `docker` binary was used.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Script /app/deploy/change-domain.sh behaves correctly for both the happy path (DuckDNS-like domain whose A record matches SERVER_IP) and the guard path (DNS mismatch -> exit 1, no mutation). Live server at IP_SERVER confirmed to serve HTTP redirect on :80 but fail TLS handshake on :443 (no cert), confirming the Let's Encrypt / sslip.io PSL issue. No code changes made.",
+  "rca of the issue": "Browser error ERR_SSL_PROTOCOL_ERROR on https://crm.IP-SERVER.sslip.io is caused by Caddy on the VPS being unable to obtain a Let's Encrypt certificate for a *.sslip.io hostname. sslip.io is not on the Public Suffix List, so all its subdomains share one global LE certificates-per-registered-domain weekly quota, which is routinely exhausted. Reproduction: curl -v https://crm.IP-SERVER.sslip.io/ returns 'TLSv1.3 alert internal error' with no ServerHello cert. Mitigation: use /app/deploy/change-domain.sh <duckdns-or-own-domain> to point APP/N8N/WAHA domains at a PSL-listed base domain whose A records point to SERVER_IP; the script validates DNS, backs up .env, rewrites domain vars + N8N_*_WEBHOOK_URL hosts, and runs `docker compose up -d --build web backend n8n` so the frontend is rebuilt with the new REACT_APP_BACKEND_URL and Caddy requests a fresh cert."
+}

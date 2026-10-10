@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 13 (ClickUp-like image resize/align inside task description). Backend sanitation of data-width/data-align verified with 4 new pytest cases (all PASS). Frontend UI tested end-to-end with Playwright: inline image upload, floating toolbar (align left/center/right, sizes 25/50/75/100, preview), blue frame + resize handle drag, size label %, persistence through reload, and client (read-only) view keeps size/alignment without toolbar. No functional issues found.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {"flow": "Client role viewing task images", "issue": "Console shows 'Mixed Content: ... http://leadflow-crm-75.preview.emergentagent.com/api/' blocked (requests to GET /api/projects/project-1/tasks/.../images/{id}). Image data-width/data-align attributes still render correctly from the HTML, but blob src cannot load over http. Likely an existing axios baseURL/http-vs-https issue for the client role; unrelated to this feature.", "affected_selectors": ["[data-testid=\"task-description\"] img[data-image-id]"]}
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter13_image_layout.py",
+    "/app/test_reports/pytest/iter13.xml"
+  ],
+  "action_items": [
+    "Investigate Mixed Content http:// vs https:// for client-role axios instance (likely in /app/frontend/src/lib/api.js) — only observed on client login (admin was fine). Not caused by this iteration but surfaced during tests."
+  ],
+  "critical_code_review_comments": [
+    "ImageTools.applyLayout clears width when data-width is missing — good; but sets marginLeft='auto' only when align is center/right and marginRight='auto' only when align=center. For align='right' marginRight is not reset to 0, which can leave a stale centered margin if a user switches center -> right -> left -> right on the same image across sessions. Minor cosmetic edge case.",
+    "ImageTools.startResize uses a dir multiplier `(align==='right' ? -1 : 1) * (align==='center' ? 2 : 1)` which collapses to 2 for 'center' (positive, growing both sides) but to -1 for 'right' (ignores the ×2). The right-aligned image therefore resizes 1× instead of 2× (one-sided), which is what the user wants. OK but worth a code comment.",
+    "TaskDescription.serialize always calls tidy() on a clone before PATCH — client cannot inject style/onerror. Good.",
+    "backend/rich_text.py allows data-width to be any 10-100 integer but reads value.isdigit() which also matches multi-byte Arabic/Thai digits. Could be tightened to re.fullmatch(r'[0-9]+', value). Low risk.",
+    "ImageTools subscribes to window 'resize' + ResizeObserver but never cleans up before unmount only on dep change; dep list [editor] is stable so fine."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter13_image_layout.py"
+  ],
+  "success_rate": {"backend": "100% (4/4 new pytest cases)", "frontend": "100% (upload, toolbar, resize, align, persistence, read-only all pass)"},
+  "test_credentials": "admin/client/developer/accounting/adminproject with password Preview123! (seeded). Captcha from GET /api/auth/captcha.",
+  "seed_data_creation": "Uploaded 1 TEST_i13.png to project-1 task 'Pengujian & optimasi' (task id ce41ffca-7171-4741-8c4e-54352f512df8) via UI + several via backend to task f1da7126-... Backend test created images TEST_i13.png on the first non-done task. 10-min grace will drop unused ones; otherwise safe to leave.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login flow: parse captcha-question text with regex (\\d+)\\s*([+\\-*])\\s*(\\d+); fields must be typed with press_sequentially (fill() is ignored by React-controlled Login inputs). After login land at '/' then goto /projects/project-1 and click [data-testid=detail-tab-kanban]; task cards use [data-testid^='task-card-']. Image resize UI: single click on img[data-image-id] inside [data-testid=task-description-input] shows [data-testid=image-toolbar] + [data-testid=image-frame]. Toolbar buttons: image-align-left/center/right, image-size-25/50/75/100, image-preview; frame has image-size-label (shows %) and image-resize-handle (pointer drag). Non-manager role sees [data-testid=task-description] and no toolbar. During local MariaDB restart you may need to run: mysql -uroot -e \"CREATE USER IF NOT EXISTS 'crm'@'localhost' IDENTIFIED BY 'crmpass'; GRANT ALL ON crm_maiharta.* TO 'crm'@'localhost'; FLUSH PRIVILEGES;\" (and also 'crm'@'127.0.0.1') then restart backend — had to do this once in this run.",
+  "rca of the issue": "No bug reported. Boundary tests confirm data-width must be a 10..100 integer (9 and 101 are stripped), '50px' is stripped (non-digit), and uppercase 'LEFT' is stripped (case-sensitive allow-list)."
+}

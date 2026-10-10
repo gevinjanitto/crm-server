@@ -1,0 +1,133 @@
+name: crm-maiharta
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--innodb-buffer-pool-size=256M", "--max-allowed-packet=64M"]
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      UPLOAD_DIR: /data/uploads
+      JWT_SECRET: ${JWT_SECRET}
+      SEED_PASSWORD: ${SEED_PASSWORD}
+      SEED_SAMPLE_DATA: ${SEED_SAMPLE_DATA:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_WHATSAPP_NUMBER: ${ADMIN_WHATSAPP_NUMBER:-}
+      CORS_ORIGINS: https://${APP_DOMAIN}
+      APP_URL: https://${APP_DOMAIN}
+      WEBHOOK_CRON_SECRET: ${WEBHOOK_CRON_SECRET}
+      MAIL_SENDER_NAME: ${MAIL_SENDER_NAME}
+      EMAIL_ENABLED: ${EMAIL_ENABLED}
+      N8N_EMAIL_WEBHOOK_URL: ${N8N_EMAIL_WEBHOOK_URL}
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED}
+      N8N_WAHA_WEBHOOK_URL: ${N8N_WAHA_WEBHOOK_URL}
+      N8N_WAHA_WEBHOOK_SECRET: ${N8N_WAHA_WEBHOOK_SECRET}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+    volumes:
+      - uploads:/data/uploads
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: https://${APP_DOMAIN}
+        REACT_APP_RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+    restart: unless-stopped
+    depends_on: [backend, n8n, waha]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+      - "5678:5678"
+      - "3000:3000"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      N8N_DOMAIN: ${N8N_DOMAIN}
+      WAHA_DOMAIN: ${WAHA_DOMAIN}
+      SERVER_IP: ${SERVER_IP}
+      ACME_EMAIL: ${ADMIN_EMAIL}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    environment:
+      N8N_PORT: "5678"
+      N8N_LISTEN_ADDRESS: 0.0.0.0
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: https://${N8N_DOMAIN}/
+      N8N_EDITOR_BASE_URL: https://${N8N_DOMAIN}/
+      N8N_PROXY_HOPS: "1"
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      N8N_SECURE_COOKIE: "true"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_RUNNERS_ENABLED: "true"
+      GENERIC_TIMEZONE: ${TIMEZONE}
+      TZ: ${TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  waha:
+    image: devlikeapro/waha:latest
+    restart: unless-stopped
+    environment:
+      WAHA_API_KEY: ${WAHA_API_KEY}
+      WAHA_DASHBOARD_ENABLED: "true"
+      WAHA_DASHBOARD_USERNAME: admin
+      WAHA_DASHBOARD_PASSWORD: ${WAHA_DASHBOARD_PASSWORD}
+      WHATSAPP_SWAGGER_USERNAME: admin
+      WHATSAPP_SWAGGER_PASSWORD: ${WAHA_DASHBOARD_PASSWORD}
+      WHATSAPP_DEFAULT_ENGINE: ${WAHA_ENGINE}
+      WHATSAPP_RESTART_ALL_SESSIONS: "true"
+      WAHA_PRINT_QR: "false"
+      TZ: ${TIMEZONE}
+    volumes:
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/.media
+
+  cron:
+    image: curlimages/curl:latest
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      WEBHOOK_CRON_SECRET: ${WEBHOOK_CRON_SECRET}
+    volumes:
+      - ./cron.sh:/cron.sh:ro
+    entrypoint: ["sh", "/cron.sh"]
+
+volumes:
+  mysql_data:
+  uploads:
+  caddy_data:
+  caddy_config:
+  n8n_data:
+  waha_sessions:
+  waha_media:

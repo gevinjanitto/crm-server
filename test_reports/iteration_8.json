@@ -1,0 +1,34 @@
+{
+  "summary": "Iteration 31 tested: Reminders (project CRUD + report), 14-day in-app notify + cron trigger, no auto-done for past end_date, Inbox (grouping, scope, mark-read), welcome email template (sambutan: no logo image, no credential words, plain link), sidebar collapse toggle (toggle + tooltip + localStorage persistence), Inbox nav page, project tabs (detail-tab-reminder, detail-tab-laporan out of More), role gating for Admin vs Developer. Backend pytest: 16 pass / 1 skip / 0 fail (inbox mark_read skipped since admin's own comments excluded leaves no own-inbox row). Frontend playwright: all critical flows green.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Login", "issues": ["Captcha widget shows the question text with heavy filter/skew styling which is still readable but low contrast; not a blocker."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter31_reminders_inbox_welcome.py",
+    "/app/test_reports/pytest/iter31.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "reminders.py notify_due atomic claim via update_one({'notified_at': None, 'done': False}) is correct and race-safe; rollback on notify() exception properly resets notified_at.",
+    "reminders.py PATCH resets notified_at only when end_date actually changes - good. 'done' only set manually; the backend never auto-flips done for past dates. Verified with test_08.",
+    "inbox.py excludes own comments via {'author_id': {'$ne': u['id']}} at query time (not just UI) - correct. Admin see_all gate bypasses involved() check only.",
+    "email_template.py: for welcome (kind='sambutan'), <img> is omitted and CTA renders a plain link instead of button; email_text helper does not include password/username strings. administration.send_welcome crafts email_msg with only generic onboarding copy (no 'password' or 'username' literal), reducing spam signals. OK.",
+    "workspace_scheduler cron_tick uses secrets.compare_digest and Pydantic envelope - good. Reminder sweep check_due_reminders is run from process_run, verified cron 200 with unique run_id (dedupe correct).",
+    "Layout.jsx collapse state persisted in localStorage key maiharta_sidebar_collapsed; SidebarNavItem renders TooltipContent gated by collapsed state. Working as expected on reload."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter31_reminders_inbox_welcome.py"
+  ],
+  "success_rate": {"backend": "100% (16/16 executed, 1 skipped due to data condition)", "frontend": "100% (all tested selectors/flows passing)"},
+  "test_credentials": "admin / Maiharta2026!, developer / Maiharta2026! (captcha fetched from /api/auth/captcha, answer sent as string). /app/tests/login_helper.sh updated note: captcha_answer must be sent as string, not int.",
+  "seed_data_creation": "Test suite auto-cleans TEST_* reminders it creates on project-1. Pre-existing seed reminders ('Perpanjang domain' notified, 'SSL' done) preserved.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Login: use data-testid selectors AND keyboard.type (not fill) because the login page's StrictMode double-mount can race with Playwright fill() causing silent empty values. Also wait ~2.5s after goto /login before reading captcha-question. captcha_answer is a STRING in the backend schema. For sidebar collapse test, reset localStorage first (localStorage.removeItem('maiharta_sidebar_collapsed')) and reload to start from a known state. Backend tests: run with -o addopts= -p no:xdist to override backend/pytest.ini which uses xdist loadscope and breaks when running a single file against modules that share state.",
+  "rca of the issue": "No functional bugs found. One initial test failure was self-inflicted (previously-collapsed localStorage carried into the next run) - verified independently that collapse+persist+tooltip all work correctly."
+}

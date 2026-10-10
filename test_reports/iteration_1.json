@@ -1,0 +1,37 @@
+{
+  "summary": "E2E regression after the Mongo->MySQL migration (new backend/docstore.py). Wrote fresh pytest suite /app/backend/tests/test_mysql_e2e.py (33 tests) exercising captcha+login for all 5 roles, me, clients CRUD + auto-created login (username=email, password 12345678, must_change_password=true), users CRUD + default-password login, non-admin forbidden from /api/users, projects create+list+get+status change, project code auto-increment (observed MH-009 -> MH-010, sequential), role scoping (client cannot see other projects, developer only sees assigned), workspace sprints (second active sprint correctly rejected with 400), kanban task create+patch move, project documents upload/download to local disk + soft delete lands in /api/trash, notifications, finance cost-types/expenses, audit, and cleanup. ALL 33 backend tests pass against the MySQL-backed API. Frontend smoke test (desktop 1440x900) via REACT_APP_BACKEND_URL: login flow with math captcha works for admin; dashboard renders project stats (9 projects, finance chart, status donut) with no console errors; navigated /projects /clients /kanban /tickets /finance /trash /audit /users - all load with no error messages (kanban correctly redirects to /projects since kanban is per-project). Manajemen User page shows the newly created client users correctly (username=email, role=Client). Prior backend pytest discrepancies flagged by main agent are confirmed to be stale legacy tests, not DB-layer bugs.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "DELETE /api/clients/{id}", "issue": "Deleting a client does not appear to cascade-delete the auto-created login account (username=email). After cleanup, two TEST_cli_*@example.com users remained visible in /api/users and the Manajemen User UI. If intentional, document; otherwise cascade or soft-disable the user."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_mysql_e2e.py",
+    "/app/test_reports/pytest/mysql_e2e.xml"
+  ],
+  "action_items": [
+    "Optional: decide cascade behaviour for deleting a client (should the auto-created user account be removed or deactivated too?). Currently it is orphaned."
+  ],
+  "critical_code_review_comments": [
+    "docstore.py (649 lines) is a sizeable compatibility shim; already single-responsibility but worth splitting into submodules (query matcher, cursor, update ops) if it grows further.",
+    "Several routes use PATCH for updates (clients, users, projects, tasks); good. Keep API docs/openapi in sync for frontend consumers.",
+    "Project code generator produced MH- prefix (not PRJ) - make sure DEPLOY docs mention this.",
+    "Mongo-style queries like {'$exists': False} and {'$in': [...]} are relied on heavily - make sure docstore handles every operator used in projects.py/documents.py (verified: documents filter {'task_id':{'$exists':False}} works end-to-end)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_mysql_e2e.py (new)"
+  ],
+  "success_rate": {"backend": "100% (33/33)", "frontend": "100% smoke (login + 8 pages render, no errors)"},
+  "test_credentials": "admin / <SEED_PASSWORD> (and adminproject, developer, accounting, client) - captcha solved via GET /api/auth/captcha",
+  "seed_data_creation": "Each test run creates TEST_cli_<hex>@example.com client (and auto-created login user), test_u_<hex> dev user, two TEST Proj A/B projects, one TEST Kanban task, one TEST sprint, one TEST doc. Projects/clients/users are deleted at end; auto-created login user and sprint are left behind (see minor issue).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend MySQL docstore passes a fresh 33-test e2e suite. Reusable path: /app/backend/tests/test_mysql_e2e.py (uses REACT_APP_BACKEND_URL from /app/frontend/.env, no fixtures outside session). Key API quirks learned: clients/users/projects/tasks use PATCH not PUT; project status updates via POST /api/projects/{pid}/status with {status, note}; valid project statuses come from core.STATUSES (e.g. 'Follow Up'); sprints are at /api/projects/{pid}/workspace/sprints; documents at /api/projects/{pid}/documents with form fields kind (DOC_TYPES in documents.py), visibility; audit list at /api/audit; trash at /api/trash; notifications returns {items, unread}; project code format is MH-NNN (not PRJ). pydantic rejects .local emails - use example.com.",
+  "rca of the issue": "N/A - no bug reproduced. The migration from Motor/Mongo to the custom MySQL docstore preserves Mongo-style query semantics ($exists, $in, $gt, etc.) and the full e2e surface we exercised behaves identically to the Mongo baseline."
+}

@@ -1,0 +1,24 @@
+{
+  "summary": "Independent verification of MySQL 8.4 + caching_sha2_password fix. (1) /app/backend/requirements.txt installed cleanly in a FRESH python3.11 venv (/tmp/freshvenv) with no errors; `import cryptography, aiomysql, pymysql, fastapi` all succeed (cryptography 50.0.2, aiomysql 0.2.0, PyMySQL 1.1.1 per pip, fastapi 0.110.1). (2) Backend copy on http://localhost:8003 (venv /root/venvcheck, backed by local MySQL 8.4.8 on 127.0.0.1:3307 with crm user using caching_sha2_password plugin) is healthy: GET /api/health -> 200 {status:ok}. (3) Full e2e regression /app/backend/tests/test_mysql_e2e.py against :8003 = 33/33 PASSED in 6.12s (auth with captcha for all 5 seed roles, projects CRUD + code increment + role-based visibility, clients CRUD + auto-login account creation, documents upload/download/trash/restore, users list + create default password + non-admin forbidden, kanban create & move, sprints unique-active rule returns 400 on 2nd active sprint, notifications list, activity logs, finance cost types & expenses). (4) Cron endpoint POST /api/cron/project-workspace with Bearer <WEBHOOK_CRON_SECRET>: fresh run_id -> {accepted:true, duplicate:false}; replay same run_id -> {accepted:false, duplicate:true}; wrong bearer -> 401. All behavior matches contract against a real caching_sha2_password MySQL 8.4 server, confirming the cryptography/cffi/pycparser additions resolve the VPS crash loop.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_mysql_e2e.py",
+    "/app/test_reports/pytest/mysql_e2e_iter3.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "requirements.txt pins are consistent: cryptography==50.0.2 depends on cffi>=1.12 (cffi==2.1.1 satisfies) which depends on pycparser (pycparser==3.0 satisfies). Pins are internally compatible.",
+    "PyMySQL 1.1.1 + cryptography>=3.3 is the officially supported combination for caching_sha2_password (MySQL 8.x default auth). Confirmed working against real MySQL 8.4.8.",
+    "Minor: pip reports PyMySQL 1.1.1 as installed (pin honored) though pymysql.__version__ shows '1.4.6' due to upstream module-level version string; functionally correct and non-blocking.",
+    "Consider adding a smoke test in CI that spins up MySQL 8.x with caching_sha2_password to prevent future regressions of this exact class of bug (the local-preview MariaDB with mysql_native_password masked it)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (33/33 e2e + health + cron accept/duplicate/401 + clean-venv install & imports)", "frontend": "not tested (backend-only per request)"},
+  "test_credentials": "admin/adminproject/developer/accounting/client all with password <SEED_PASSWORD>; math captcha from GET /api/auth/captcha; cron bearer <WEBHOOK_CRON_SECRET>",
+  "seed_data_creation": "test suite creates and cleans up its own TEST_-style projects/clients/users/tasks/docs via test_zz_cleanup",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Local MySQL 8.4.8 is running on 127.0.0.1:3307 (socket /root/my84run/m.sock, user crm/<MYSQL_PASSWORD> caching_sha2_password, db crm84). Backend bound to it is on http://localhost:8003 (log /root/run84/backend.log, venv /root/venvcheck). Preview public URL still uses MariaDB (native password) and must NOT be used to validate the caching_sha2_password fix. Full regression entry point: pytest /app/backend/tests/test_mysql_e2e.py with REACT_APP_BACKEND_URL=http://localhost:8003.",
+  "rca of the issue": "MySQL 8.x defaults to caching_sha2_password. PyMySQL dispatches this auth to the `cryptography` package via cffi; if cryptography is not importable at runtime, PyMySQL raises RuntimeError and the connection (and thus the FastAPI startup) fails -> container crash-loop. Local preview used MariaDB with mysql_native_password so the missing dep was invisible. Fix: pin cryptography==50.0.2 (+ transitive cffi==2.1.1, pycparser==3.0) in /app/backend/requirements.txt so the Docker image installs them. Verified end-to-end against a real MySQL 8.4.8 instance with the crm user explicitly created using WITH caching_sha2_password."
+}

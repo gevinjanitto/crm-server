@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 33 (iter_10 report): tested subtask description, task description photos, and comment attachments. Backend pytest 20/20 pass; Playwright e2e flow as admin on /projects/project-1/kanban passed all three features including persistence across reload, lightbox open/Escape-close keeping drawer open, image delete, and multi-file comment send with image+doc chips. Backend proves developer cannot upload task images (403), non-image upload returns 400, >5 files -> 400, storage_path is stripped from all public responses, and client can send comment attachments on own project.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Task drawer at mobile 390px", "issues": ["Inner [data-testid=task-detail] shows horizontal overflow: scrollWidth=381 vs clientWidth=356 (~25px). Body itself has no page overflow, but the drawer content scrolls horizontally. Likely from a wide row (date inputs or tag chips). Not a blocker but worth tightening."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter33_task_media.py",
+    "/app/test_reports/pytest/iter33.xml"
+  ],
+  "action_items": [
+    "(Minor) Tune responsive CSS for ck-overlay/ck-prop grid so the task drawer has no horizontal overflow at 390px width."
+  ],
+  "critical_code_review_comments": [
+    "task_media.store_files: when `files` list is empty FastAPI will already 422 (File(...) requires at least one), but worth confirming client sends a non-empty list; current logic assumes len(files) >= 1.",
+    "task_media.store_files cleanup only removes blobs saved so far on put_object failure, but if MongoDB update fails later in upload_images the files remain on disk. Consider wrapping the db.update_one in try/except and calling remove_files on failure.",
+    "kanban.save_comment: `attachments or []` is persisted directly from store_files (contains storage_path). Good — public_files is applied before returning. Keep that pattern elsewhere consistent.",
+    "SubtaskUpdate accepts description up to 3000 chars which matches task description comments; make sure the Pydantic error maps to a user-friendly toast on the frontend subtask description-input."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter33_task_media.py"],
+  "success_rate": {"backend": "100% (20/20)", "frontend": "100% core flows"},
+  "test_credentials": "admin / Maiharta2026! (captcha math + id); developer, client same password",
+  "seed_data_creation": "Created and deleted during tests: TEST_subtask desc, TEST_long, TEST_UI_sub2 subtasks; TEST_a.png and 1 comment attachment image + 1 comment PDF (all deleted at end of each test).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter33 features (subtask description, task photo attachments, comment file attachments) fully covered by backend tests in test_iter33_task_media.py. Login requires math captcha: GET /api/auth/captcha then evaluate 'N + M' from question and POST login with captcha_id + captcha_answer. Playwright login must use press_sequentially (not fill) so React controlled input picks up value; after submit navigate target is `/`, not `/dashboard`. The task drawer stays open across page reload (URL carries ?task=), so no need to click a task card again.",
+  "rca of the issue": "N/A"
+}

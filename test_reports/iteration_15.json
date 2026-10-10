@@ -1,0 +1,32 @@
+{
+  "summary": "Iteration 15 (Reminder: description + document upload + optional extra H-N notification). Backend verified with 18 pytest cases (ALL PASS) in /app/backend/tests/test_iter15_reminder_extra.py: validation (14 rejected, 0/366 rejected, extra without days rejected, end<start rejected), role gating (non-admin 403 on create and list), lifecycle (end_date change resets both notified_at + extra_notified_at; extra_days change resets only extra_notified_at keeping main; extra_notify toggle off clears extra_notify_days), combined notification single-insert when both main+extra claimed in same notify_due call (title starts with 'Reminder:' NOT 'Reminder tambahan'), extra-alone title uses 'Reminder tambahan (H-N): <name>' when main already fired, attachments full lifecycle (upload pdf -> download bytes match -> delete; bad .exe rejected 400; 10MB+1KB rejected; multi-upload with 5-per-batch limit; 20-per-reminder cap enforced at 21st upload), delete reminder removes files under /app/backend/uploads/crm-maiharta/reminders/<rid>/. Global report /api/reminders surfaces description, extra_notify, extra_notify_days and attachments with project_name. Frontend verified with Playwright on /projects/{pid}/reminder as admin: 'Reminder baru' modal opens with Nama, Deskripsi, Tanggal mulai/akhir, 'Notif tambahan?' switch, upload button; chip 3 sets days=3; days=14 blocked with Indonesian toast '14 hari sudah menjadi notifikasi utama. Pilih jumlah hari lain.'; days=5 saves; created item shows reminder-description-<id>, reminder-extra-badge-<id> ('Notif tambahan H-5'), file chip and reminder-file-download-<aid>; global /reminders page shows reminder-row-<id>, reminder-row-description-<id> and reminder-row-extra-<id> ('+ Notif tambahan H-5'); edit -> toggle extra off -> badge removed from row. All UI steps PASSED.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter15_reminder_extra.py",
+    "/app/test_reports/pytest/iter15.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "reminders.py notify_due() correctly builds a single combined in-app notification when both main+extra are claimed in the same call: title='Reminder: <name>' only when claimed==['extra_notified_at']. The combined path verified live: creating a reminder with end=today+2 and extra_days=5 produces exactly ONE notification with title 'Reminder: <name>' (no 'tambahan' prefix).",
+    "edit_reminder() reset logic is correct and minimal: end_date change -> notified_at=None AND extra_notified_at=None; extra toggle flip or extra_days change -> extra_notified_at=None (main untouched). Verified end-to-end.",
+    "ReminderInput.check_range runs Pydantic model_validator so 14-day and <1 / >365 are 422 (not 400). Frontend ProjectReminders.jsx submit() preempts with its own toast — good UX.",
+    "store_files enforces MAX_FILES=5 per upload and 10MB per file in task_media.py; MAX_ATTACHMENTS=20 cap is enforced per reminder in reminders.py; delete_reminder calls remove_files which deletes via storage.delete_object. On-disk check confirms /app/backend/uploads/crm-maiharta/reminders/<rid>/ is cleaned.",
+    "ProjectReminders.jsx file picker limits to 5 files client-side (.slice(0,5)) matching backend MAX_FILES — consistent.",
+    "GET attachment uses file_response with Content-Disposition; download() in api.js is used by reminder-file-download-<aid> — download link works (verified binary bytes match b'hello-pdf').",
+    "non-Admin returns 403 on both /api/projects/{pid}/reminders and /api/reminders — verified with developer token.",
+    "Nit: reminders.py line 157 — extra_notified_at is reset even when only end_date changes (correct), but extra_notified_at is NOT reset when extra_notify toggles from False to True without extra_days change (changes.get('extra_notify_days', r.get('extra_notify_days')) may be None). This is a non-issue because turning on extra with no days is already rejected by check_extra. OK as-is.",
+    "Reminder in-app notifications correctly use `entity_id` (not `ref_id`) — matches /app/backend/notify.py schema. Any UI consumers should read entity_id.",
+    "Minor: there is some stale TEST_* data (TEST_DelFiles, Domain) left in project-8 across runs by smoke_reminder_extra.sh (which does not delete the reminder it creates). Not a bug in this feature; smoke script could be improved to clean up."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter15_reminder_extra.py (new)"
+  ],
+  "success_rate": {"backend": "100% (18/18)", "frontend": "100% (9/9 steps: open form, chip-3 sync, file pick, 14-day toast rejection, save+persist, description+badge+file chip visible, global report row+desc+extra note, edit toggle-off removes badge)"},
+  "test_credentials": "admin / Maiharta123! (from /app/memory/test_credentials.md); captcha via GET /api/auth/captcha",
+  "seed_data_creation": "All TEST_ reminders created during testing were deleted on teardown. Stale 'Domain' and 'TEST_DelFiles' from previous smoke runs were cleaned at test start.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Modal opens on normal locator().click() — do NOT use force=True on [data-testid='add-reminder'] because the shadcn Button is wrapped and force bypass doesn't dispatch the React onClick properly. Token injection pattern: POST /api/auth/login with captcha then localStorage.setItem('maiharta_token', token) BEFORE navigating. Projects list is a plain array (not {items}) from GET /api/projects. Reminder notifications use entity_id (not ref_id). File storage layout: /app/backend/uploads/crm-maiharta/reminders/<rid>/<fid>.<ext>. Smoke script /app/tests/smoke_reminder_extra.sh leaves data behind; add a cleanup DELETE if re-running.",
+  "rca of the issue": "No bugs found."
+}

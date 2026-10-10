@@ -1,0 +1,20 @@
+{
+  "summary": "Verified reCAPTCHA integration for VPS deploy fix. Static checks (docker-compose.yml YAML, setup.sh bash -n, env vars in Dockerfile/.env.example) all pass. Backend GET /api/auth/captcha returns provider=recaptcha with correct site_key. POST /api/auth/login returns 400 'Verifikasi CAPTCHA gagal...' without token, 200 with any non-empty token (Google test secret accepts any), 401 with correct token+wrong password. Frontend Login page renders Google reCAPTCHA widget (data-testid=recaptcha-widget) with 2 iframes from google.com/recaptcha and the expected 'for testing purposes only' banner; math captcha (captcha-question) is NOT rendered as expected.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/test_reports/iteration_6.json"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "deploy/docker-compose.yml correctly plumbs RECAPTCHA_SITE_KEY/RECAPTCHA_SECRET_KEY to backend and REACT_APP_RECAPTCHA_SITE_KEY as web build-arg with safe ${VAR:-} defaults so compose does not fail when unset.",
+    "web.Dockerfile declares ARG and ENV before yarn build, so CRA embeds the key at build time (correct for Create React App).",
+    "backend/auth.py: captcha endpoint and login verification correctly gate on BOTH RECAPTCHA_SECRET+SITE being set; when unset the system falls back to math captcha. Fallback behaviour is preserved for VPS instances that leave the keys empty."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "test_credentials": "admin / Maiharta#2026 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Preview backend has Google reCAPTCHA v2 TEST keys set in backend/.env. Any non-empty recaptcha_token passes server-side verification. For VPS instances the user must fill RECAPTCHA_SITE_KEY and RECAPTCHA_SECRET_KEY in deploy/.env and rebuild (web is Create React App so the site key is baked in at build time).",
+  "rca of the issue": "On VPS the reCAPTCHA env vars were not forwarded by deploy/docker-compose.yml, so backend fell back to math captcha and frontend lacked REACT_APP_RECAPTCHA_SITE_KEY at build time. Fix passes both env vars to backend and build-arg to web image; verified end-to-end via backend API and UI widget render."
+}

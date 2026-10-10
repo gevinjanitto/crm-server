@@ -1,0 +1,39 @@
+{
+  "summary": "Verified Iteration 12 features: (1) Dashboard KPI card clickable links for Admin, Admin Project / Developer, Accounting, and Client roles; (2) Task detail rich-text description with inline image upload, blur save and reload persistence; (3) Backend sanitization of description_html via PATCH /api/projects/{pid}/tasks/{tid}. Previous agent's bug fix (open_tickets card linking to new group=active instead of group=open) is working — chip 'Belum selesai' shows the Belum selesai set including 'Dikerjakan' and the list count (4 for admin, 1 for developer) matches the KPI number. All backend tests in test_iter12_rich_description.py now pass (6/6) after a small sanitation fix in backend/rich_text.py (see 'rca of the issue'). Playwright UI test confirmed inline image appears mid-text, toast 'Deskripsi disimpan' fires on blur, and after full page reload the <img data-image-id> persists and the blob src loads successfully.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PATCH /api/projects/{pid}/tasks/{tid} (description_html)", "issue": "Before fix: inner text of stripped <script>/<style> tags leaked into the plain-text `description` field (e.g. 'alert(1)'). Bleach with strip=True keeps the inner text when removing the tag. Fixed in /app/backend/rich_text.py by pre-stripping <script>/<style> blocks before bleach.clean()."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter12_rich_description.py",
+    "/app/test_reports/pytest/iter12.xml"
+  ],
+  "action_items": [
+    "Previous description seed had the hard-coded SEED_PASSWORD stored as 'Maiharta2026!' in test helpers but the environment and seeder use 'Preview123!' (I updated test_iter12_rich_description.py and _helper_login.py still has the old default — only used as script default)."
+  ],
+  "critical_code_review_comments": [
+    "backend/rich_text.py used bleach.clean with strip=True which keeps the inner text of removed <script>/<style> tags. Already fixed by pre-stripping those blocks with a regex (DOTALL) before bleach.",
+    "frontend TaskDescription.jsx `putHtml` relies on document.execCommand('insertHTML') which is deprecated; works today across Chromium but Safari may differ. Not blocking.",
+    "RichTextDescription hydrate() uses URL.createObjectURL per blob; cleanup only runs on component unmount. If the same editor hydrates many images in a single mount lifecycle, memory grows until drawer close. Minor.",
+    "backend/tests/_helper_login.py still hard-codes password 'Maiharta2026!' — not currently used by test_iter12 but may confuse the next agent; align with SEED_PASSWORD env.",
+    "Dashboard.jsx conditional kpi link for Accounting (`acc ? '/finance' : '/tickets?group=active'`) is correct; however Accounting role gets 403 from GET /api/tickets so if the user ever navigates there via UI shortcut it will fail. Current KPI avoids /tickets for Accounting, so OK."
+  ],
+  "updated_files": [
+    "/app/backend/rich_text.py",
+    "/app/backend/tests/test_iter12_rich_description.py"
+  ],
+  "success_rate": {"backend": "100% (6/6 pytest cases)", "frontend": "100% (KPI nav + inline image flow)"},
+  "test_credentials": "admin / Preview123! (and client, developer, accounting, adminproject — all Preview123!). Login requires math captcha from /api/auth/captcha.",
+  "seed_data_creation": "During UI test one small PNG was uploaded to project-1 task 'Desain antarmuka & design system' and left behind as 4 description_images (then description_html was reset to empty via API; images remain until the 10-min grace period expires and the next PATCH drops them). Main agent may delete manually if needed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Login: GET /api/auth/captcha -> parse 'a op b', POST /api/auth/login with captcha_id+captcha_answer. SEED_PASSWORD=Preview123!. After successful login the SPA lands on '/' not '/dashboard' — wait for [data-testid=dashboard-kpi-0] rather than the URL. Login inputs are React-controlled: use locator.press_sequentially(), fill() may be ignored. Admin dashboard KPIs: 0->/projects, 1->/projects?tab=Aktif, 2->/projects?tab=Selesai, 3->/tickets?group=active. Accounting KPI3 -> /finance. Client KPI0->/tickets, 1->/tickets?group=open, 2->/tickets?status=Dikerjakan, 3->/tickets?group=closed. Rich editor data-testid=task-description-input (contentEditable). Toolbar buttons: task-desc-bold/italic/ul/ol/link/image, hidden input task-image-input. Non-manager renders data-testid=task-description (read-only).",
+  "rca of the issue": "Bleach's strip=True removes disallowed tags but preserves their text content. The sanitizer wrote the cleaned HTML (safe) correctly, but the plain-text `description` was derived from that HTML and therefore inherited the inner text of <script>/<style>. Fix: pre-strip <script>...</script> and <style>...</style> blocks with a DOTALL regex *before* bleach runs, so their inner content is never surfaced in either `description_html` or `description`. Verified by TestSanitize::test_sanitize_script_and_handlers (now passing)."
+}

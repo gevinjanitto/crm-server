@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 14 (notification pause + per-user mute + admin reset-password + Google Drive backup cron). Backend verified with 12 pytest cases (all PASS): global pause GET/PUT persistence, role gating (403), per-user mute persistence+gating, self-reset 400, non-admin reset 403, full reset-password e2e (old session invalidated, login with 12345678, must_change_password=true, force_external creates both email+whatsapp delivery rows despite global pause + user mute), and delivery mute suppression (no email delivery row for muted channel; in-app notification still created). UI verified with Playwright on /users as admin: notification-pause-panel renders with 'paused' warning style when any switch on; pause-all-email/whatsapp toggles persist after reload; Notif column with per-user mute buttons toggles 'muted' class (red crossed state); reset-password dialog shows default password 12345678 and admin's own reset button is hidden (4 reset buttons for 5 users). gdrive-backup.sh passes bash -n; offset math produces HOUR=0 for +0700 WIB (00:00 WIB = 17:00 UTC) and HOUR=17 for +0000. All pause/mute toggled OFF at the end; accounting password restored to Preview123! via admin PATCH after reset-flow test.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter14_notification_controls.py",
+    "/app/test_reports/pytest/iter14.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "notification_controls.reset_password reads row with projection {'_id': 0} then uses row.get('active') and row['username']/row['name'] — good, _id excluded.",
+    "notification_delivery.deliver_notifications correctly skips delivery row creation when (paused[channel] OR user mute[channel] OR preference off) AND not force_external — matches spec: no delivery row for muted channel, in-app notification still created elsewhere.",
+    "reset-password endpoint uses await db.sessions.delete_many({'user_id': user_id}) which invalidates all existing tokens (verified via test: old /auth/me returns 401 after reset).",
+    "gdrive-backup.sh correctly handles negative offsets using arithmetic modulo; `set -euo pipefail` + trap to clean $STAGE on exit; sync (not copy) ensures old backups are purged. Minor: HOURS=$((10#${OFFSET:1:2})) handles only HHMM offsets; fractional offsets like +0530 produce HOUR=22 which ignores the :30 minutes — fine because minute is always '0' per spec '00:00 WIB', but worth a comment for maintainers in non-WIB timezones.",
+    "UserNotificationControls.jsx: NotificationPausePanel optimistically updates state then reverts on error — good UX; however it uses setPause(pause) on catch which captures stale state via closure — minor; acceptable since state is simple.",
+    "ResetPasswordButton toast exposes the plain default password in UI (12345678) — expected per spec but note this is logged to any screen recorder / shoulder surfer; acceptable since user is forced to change on first login."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter14_notification_controls.py"],
+  "success_rate": {"backend": "100% (12/12)", "frontend": "100% (pause panel, persistence, warning style, mute toggle, reset dialog, self-hidden all pass)"},
+  "test_credentials": "admin/adminproject/developer/accounting/client with password Preview123! (seeded); captcha from GET /api/auth/captcha. During e2e the accounting password was reset to 12345678 and then restored to Preview123! via PATCH /api/users/{id} {new_password}.",
+  "seed_data_creation": "None. Global pause left OFF; all user mutes left OFF; accounting password restored.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use UI token-injection pattern to bypass captcha-flaky login: backend login via requests.Session + GET /api/auth/captcha; then page.evaluate(\"localStorage.setItem('maiharta_token', '<token>')\") and navigate. Reset-password test runs with global pause+mute ON to confirm force_external bypass; it fetches /api/account/notifications/deliveries (not /api/notifications/deliveries). The user notification list lives at /api/notifications (notify.py router), while /api/account/notifications returns preferences (account_notifications.py). Rate limit on /api/account/notifications/test is 60s so sleep accordingly between runs.",
+  "rca of the issue": "No bugs found. Delivery pause/force-external logic validated: when paused[channel] or user mute[channel] is true, the delivery row is not created (confirmed via diff on /api/account/notifications/deliveries vs the newest /api/notifications id). Reset-password sets force_external=True in notify extras, so deliver_notifications creates both email+whatsapp rows (status 'skipped' locally because EMAIL_ENABLED/WHATSAPP_ENABLED=false — expected per request). Old sessions invalidated via db.sessions.delete_many."
+}

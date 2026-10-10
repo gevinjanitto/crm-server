@@ -1,0 +1,54 @@
+/* Decorative rings are clipped inside their own layer, never over controls. */
+.orbit-backdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+.orbit-system { position: absolute; width: min(780px, 94%); aspect-ratio: 1; left: 50%; top: 56%; transform: translate(-50%, -50%); }
+.orbit-ring { display: block; position: absolute; border: 1px solid #b8dcff25; border-radius: 50%; inset: 0; animation: orbit-wave 20s ease-in-out infinite; }
+.orbit-ring-two { inset: 10%; border-color: #b8dcff32; animation-delay: -5s; }
+.orbit-ring-three { inset: 21%; border-color: #b8dcff28; background: #8cbfff04; animation-delay: -10s; }
+.orbit-ring-four { inset: 32%; border-color: #b8dcff25; animation-delay: -15s; }
+.orbit-planet-path { position: absolute; inset: -1px; border-radius: 50%; animation: orbit-revolution 48s linear infinite; --orbit-start: -55deg; }
+.orbit-path-two { animation-duration: 68s; animation-direction: reverse; --orbit-start: 125deg; }
+.orbit-path-three { animation-duration: 84s; }
+.orbit-path-four { animation-duration: 104s; animation-direction: reverse; }
+.orbit-satellite { position: absolute; left: 50%; top: 0; transform: translate(-50%, -50%); border-radius: 50%; width: 9px; height: 9px; background: #b5d6f6; box-shadow: 0 0 0 6px #b5d6f610; opacity: .65; }
+.orbit-satellite-two { width: 7px; height: 7px; background: #7cd8da; }
+@keyframes orbit-wave { 0%,100% { transform: scale(.94); opacity: .6; } 50% { transform: scale(1.06); opacity: 1; } }
+@keyframes orbit-revolution { from { transform: rotate(var(--orbit-start)); } to { transform: rotate(calc(var(--orbit-start) + 360deg)); } }
+.login-visual > .orbit-backdrop { z-index: -1; }
+.login-visual > .orbit-backdrop .orbit-system { top: 65%; width: min(840px, 94%); }
+.login-visual > .visual-grid { opacity: .35; }
+.login-form-panel { position: relative; isolation: isolate; }
+.orbit-backdrop--login-form .orbit-system { width: 440px; left: 105%; top: 6%; }
+.orbit-backdrop--login-form .orbit-ring { border-color: #5282d911; background: transparent; }
+.orbit-backdrop--login-form .orbit-satellite { opacity: .2; }
+.main-shell.dashboard-shell { position: relative; isolation: isolate; }
+.orbit-backdrop--dashboard { height: 660px; }
+.orbit-backdrop--dashboard .orbit-system { width: 750px; max-width: 95%; left: 83%; top: -1%; }
+.orbit-backdrop--dashboard .orbit-ring { border-color: #537ed117; background: transparent; }
+.orbit-backdrop--dashboard .orbit-ring-two { background: #7fabef04; }
+.orbit-backdrop--dashboard .orbit-satellite { opacity: .28; }
+.brand-intro { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; isolation: isolate; overflow: hidden; background: radial-gradient(ellipse at 50% 80%, #1f5487 0, #173768 54%, #142f59 100%); color: #fff; }
+.brand-intro-content { display: flex; flex-direction: column; align-items: center; padding: 32px; text-align: center; }
+.brand-intro-content > img { width: 76px; height: 76px; object-fit: contain; filter: brightness(0) invert(1); margin-bottom: 28px; }
+.brand-intro-name-mask { overflow: hidden; }
+.brand-intro h1 { font-size: clamp(25px, 4vw, 34px); font-weight: 400; line-height: 1.4; letter-spacing: -.03em; margin: 0; }
+.brand-intro h1 b { font-weight: 700; }
+.brand-intro p { font-size: 9px; color: #b2c9e8; letter-spacing: .24em; margin: 13px 0 0; }
+.brand-intro-progress { width: 150px; height: 2px; overflow: hidden; margin-top: 30px; background: #ffffff1f; border-radius: 2px; }
+.brand-intro-progress span { display: block; width: 100%; height: 100%; transform-origin: left; background: #89d5df; }
+.brand-intro-footer { position: absolute; bottom: 36px; font-size: 10px; color: #9ebbdc; letter-spacing: .04em; }
+.orbit-backdrop--intro .orbit-system { width: min(680px, 110vw); top: 50%; }
+.orbit-backdrop--intro .orbit-ring { border-color: #bddaff0d; }
+.orbit-backdrop--intro .orbit-satellite { opacity: .24; }
+@media (min-width: 1001px) { .login-visual > .visual-grid { opacity: .3; } }
+@media (min-width: 1400px) { .login-visual > .orbit-backdrop .orbit-system { left: 50%; top: 62%; width: min(840px, 94%); } }
+@media (max-width: 700px) {
+  .login-visual > .orbit-backdrop .orbit-system { left: 77%; top: 48%; width: 380px; }
+  .orbit-backdrop--login-form .orbit-system { width: 300px; left: 108%; top: 0; }
+  .orbit-backdrop--dashboard .orbit-system { width: 500px; max-width: none; left: 105%; top: 4%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ring, .orbit-planet-path { animation: none; }
+  .orbit-planet-path { transform: rotate(var(--orbit-start)); }
+}
+.login-session-notice { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; margin-bottom: 16px; border: 1px solid #cfdff7; border-radius: 8px; color: #35577f; background: #eef5ff; font-size: 12px; line-height: 1.65; }
+.login-session-notice svg { flex-shrink: 0; margin-top: 2px; }

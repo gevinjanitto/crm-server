@@ -1,0 +1,23 @@
+{
+  "summary": "Frontend-only verification of kanban column scroll feature (max 10 tasks visible, scroll beyond). Tested on /projects/project-1/kanban as admin. All scenarios passed: long column 'Belum Mulai' (16 tasks) got ck-cards-scroll class with maxHeight=1128px and overflowY=auto; short column 'Dikerjakan' had no scroll (maxHeight='none', overflowY='visible'). Internal scroll reveals TEST_scroll 12. Quick-add button 'Tambah task' stays below the scroll area. Card click opens task drawer. Drag & drop of a scrolled-only card (TEST_scroll 12) from Belum Mulai -> Dikerjakan succeeded and persisted after reload (BM 16->15, DK 1->2). Mobile 390px: board horizontal scroll (scrollWidth 1644px) is confined to the board (documentElement.scrollWidth stays 390 == clientWidth) so no page-level horizontal overflow; long column still scrolls internally.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": ["/app/backend/tests/_helper_login.py"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ColumnCards measurement computes maxHeight from first 10 cards' heights only; if later cards (index >=10) are taller after render the maxHeight could clip them. Not a functional bug for current data but may surprise with variable card sizes (e.g. tag-heavy cards). Consider using fixed row-height or measuring an average/median.",
+    "ResizeObserver only observes the first 10 children; if those unmount (filtering/search) during the same mount, observers may become stale. useLayoutEffect dep is only `count`, so changes in child content don't retrigger measure. Minor edge case."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a", "frontend": "100%"},
+  "test_credentials": "admin / Maiharta2026! with math captcha",
+  "seed_data_creation": "No new data created by tester. Pre-existing 13 TEST_scroll 0..12 tasks were used; one of them (TEST_scroll 12) was moved from Belum Mulai -> Dikerjakan to validate drag persistence. Main agent should move TEST_scroll 12 back or delete all TEST_scroll tasks.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login requires math captcha solved via DOM: fetch [data-testid=captcha-question] inner_text, parse 'a op b', fill [data-testid=captcha-answer]. Use locator.press_sequentially() instead of fill() for react controlled inputs. After my test TEST_scroll 12 lives in 'Dikerjakan' (project-1) instead of 'Belum Mulai' so Belum Mulai now holds 15 tasks (still >10, still scrolls).",
+  "rca of the issue": "N/A — feature works as expected."
+}
