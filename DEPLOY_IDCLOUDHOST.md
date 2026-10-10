@@ -84,8 +84,9 @@ Simpan (`Ctrl+O`, `Enter`, `Ctrl+X`), lalu `sudo docker compose up -d backend`. 
 | Log backend / n8n / WAHA / SSL | `sudo docker compose logs --tail=100 backend` · `n8n` · `waha` · `web` |
 | Restart semua | `sudo docker compose restart` |
 | **Update kode / build ulang** (setelah Save to GitHub atau ubah `.env`) | `sudo bash update.sh` (tetap jalan walau SSH putus; progres: `sudo tail -f update.log`) |
-| Backup (DB + file + n8n + WAHA) | `sudo bash backup.sh` → `deploy/backups/` |
+| Backup (DB + file + n8n + WAHA) | `sudo bash backup.sh` → `deploy/backups/` (disimpan 3 hari terakhir) |
 | **Kosongkan semua data & bersihkan server** (mulai dari awal, hanya akun `admin`) | `sudo bash reset-data.sh` |
+| **Bersihkan file tidak penting** (image & cache build lama, log sistem, cache apt). Data, upload, n8n & WAHA aman | `sudo bash cleanup.sh` |
 | Backup otomatis tiap 02.00 | `(sudo crontab -l 2>/dev/null; echo "0 2 * * * cd /opt/crm-maiharta/deploy && bash backup.sh >/dev/null 2>&1") \| sudo crontab -` |
 | Restore database | `gunzip -c backups/<tgl>/mysql.sql.gz \| sudo docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'` |
 
@@ -151,7 +152,7 @@ sudo bash gdrive-backup.sh                  # uji sekarang → cek file muncul d
 sudo bash gdrive-backup.sh --install-cron   # jadwal otomatis tiap 00:00 WIB
 sudo crontab -l                             # pastikan baris gdrive-backup.sh ada
 ```
-Log setiap malam: `sudo tail -50 /opt/crm-maiharta/deploy/gdrive-backup.log`. Jika sebelumnya memasang cron `backup.sh` jam 02.00 (langkah 9), boleh dihapus dengan `sudo crontab -e` karena backup lokal sudah ikut dibuat oleh script ini (salinan lokal tetap disimpan 14 hari di `deploy/backups/`).
+Log setiap malam: `sudo tail -50 /opt/crm-maiharta/deploy/gdrive-backup.log`. Jika sebelumnya memasang cron `backup.sh` jam 02.00 (langkah 9), boleh dihapus dengan `sudo crontab -e` karena backup lokal sudah ikut dibuat oleh script ini (salinan lokal tetap disimpan 3 hari di `deploy/backups/`).
 
 ### Restore dari Drive
 Unduh file `.tar` dari Drive ke server, lalu: `mkdir -p /tmp/restore && tar xf crm-maiharta-backup-*.tar -C /tmp/restore`. Database: `gunzip -c /tmp/restore/mysql.sql.gz | sudo docker compose exec -T mysql sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'`. Volume file (contoh uploads): `sudo docker run --rm -v crm-maiharta_uploads:/data -v /tmp/restore:/in alpine sh -c 'tar xzf /in/uploads.tar.gz -C /data'` (ulangi untuk `n8n_data` dan `waha_sessions`). `env.txt` adalah salinan `deploy/.env`.

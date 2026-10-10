@@ -32,6 +32,8 @@ echo "==> Build backend & frontend (5-10 menit)"
 if docker compose build backend web; then BUILD_OK=1; else BUILD_OK=0; fi
 echo "==> Menyalakan semua layanan"
 docker compose up -d
+echo "==> Menghapus image lama sisa build (data, upload, n8n & WAHA tidak tersentuh)"
+docker image prune -f >/dev/null || true
 docker compose ps --format "table {{.Service}}\t{{.Status}}"
 if [ "$BUILD_OK" = 1 ]; then
   echo "==> $(date '+%F %T') SELESAI. Tekan Ctrl+C untuk keluar dari tampilan log."
