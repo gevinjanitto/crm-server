@@ -1,0 +1,26 @@
+{
+  "summary": "Iteration 17: verified new rich-description + document-preview feature set end-to-end. Backend pytest (7/7 pass) covers revisions/maintenance listings including description_html, task PATCH description_html sanitization (strips <script>, keeps <b>, derives plain description), subtask PATCH description_html persistence, and subtask image upload/fetch. Frontend Playwright confirmed: Kanban task editor + toolbar + image input present; subtask rich editor saves (toast 'Deskripsi subtask disimpan'); revision card on /revisions navigates to /projects/{pid}/kanban?task={task_id} opening task-detail with HTML description rendered; maintenance-1 card does the same; ticket-sourced maintenance row is NOT clickable (no is-clickable class, click did not navigate); document preview opens for PDF (iframe), PNG (image), CSV (text) with correct testids; previewing a task attachment inside task-detail does NOT close the drawer and Escape closes only the preview.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter17_rich_desc_and_preview.py",
+    "/app/test_reports/pytest/iter17_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "backend/projects.py attach_task_info only copies description_html when task has it set (non-None). That is correct — maintenance rows without rich descriptions simply omit the field. Verified against seeded maintenance-1 (no html) and revision-1 (html present).",
+    "backend/kanban.py edit_subtask → drop_unused_subtask_images sanitizes HTML and recomputes plain description server-side; confirmed <script> stripped while <b>/<strong>/<em> preserved.",
+    "backend/task_media.py enforces MAX_IMAGES per subtask (400 if exceeded) — good guardrail, same as task description images.",
+    "frontend DocPreview mounts images/PDF/text/docx/xlsx branches by content-type with proper data-testids; close via Escape or close button leaves parent dialogs (task-detail drawer) intact — verified. Nice.",
+    "frontend WorkCard sets is-clickable only when onOpen is provided; ticket-sourced maintenance rows correctly skip it, preventing accidental navigation."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter17_rich_desc_and_preview.py (new)"
+  ],
+  "success_rate": {"backend": "100% (7/7 pytest)", "frontend": "100% of 7 critical flows exercised"},
+  "test_credentials": "admin / Tes12345 — math captcha solved programmatically via /app/tests/local_login.sh",
+  "seed_data_creation": "Uploaded 3 TEST_preview.* project docs (pdf/png/csv) to project-8 for DocPreview rendering, then deleted after test. Attached TEST_task_attach.png to task 9fc438a2 (left in place — single file, no business impact).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend regression lives at /app/backend/tests/test_iter17_rich_desc_and_preview.py — run with REACT_APP_BACKEND_URL=... pytest -n0. Login API: /api/auth/captcha returns a 5-token question like '13 + 9 = ?'; parse parts[0]+parts[2], send captcha_answer as STRING. Frontend auth: inject localStorage['maiharta_token'] after visiting origin, then navigate — avoids captcha flakiness. Rich editor test ids: task-description-input/view, task-desc-{bold|italic|list|number|link}, task-image-input; subtask equivalents subtask-description-input-{sid}, subtask-desc-{sid}-bold etc, subtask-image-input-{sid}; work form: work-description-input, work-description-tool-{bold|...}, work-description-image-input; create-task modal: create-task-description-input / create-task-description-image-input. Doc preview testids: doc-preview, doc-preview-title, doc-preview-close, doc-preview-download, doc-preview-image/pdf/text/docx/sheet/unavailable. Revision/maintenance cards: work-card-{id} (click body → kanban; is-clickable class gates it), work-description-{id} (rendered rich HTML). Seeded fixtures: project-8 revision-1 (task 9fc438a2-239d-4906-8041-dedc02fbf132, 1 subtask e8293c23...); project-4 maintenance-1 (task d6e0c7ce...). Doc upload API requires kind ∈ DOC_TYPES (use 'Lampiran Project') and visibility ∈ {Internal,Client}."
+}

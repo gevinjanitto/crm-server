@@ -72,7 +72,7 @@ export const RichDescription = ({ docKey, html, editable, imagePath, upload, onS
   }, [docKey, html]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => {
     Object.values(urls.current).forEach((p) => p.then((u) => u && URL.revokeObjectURL(u)));
-    Object.values(local.current).forEach((l) => URL.revokeObjectURL(l.url));
+    urls.current = {}; lastId.current = null;
   }, []);
   const save = async () => {
     if (!editable || busyRef.current) return;
