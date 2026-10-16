@@ -1,0 +1,113 @@
+/* Shared work cards: independent of generic section-heading/toolbar spacing. */
+.work-card-list { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 20px; }
+.work-card { min-width: 0; padding: 24px; display: flex; flex-direction: column; border-radius: 14px; box-shadow: 0 3px 16px -8px #1f2a441a; transition: border-color .2s, box-shadow .2s; }
+.work-card:hover { border-color: #c9d7ee; box-shadow: 0 8px 24px -12px #1f2a4428; }
+.work-card-header { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+.work-card-tags { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.work-card .status-badge, .work-kind, .work-priority { min-height: 26px; display: inline-flex; align-items: center; gap: 5px; padding: 4px 9px; font-size: 11px; line-height: 1.45; border-radius: 6px; font-weight: 600; }
+.work-kind { color: #68748b; background: #f4f6fa; border: 1px solid #e9edf4; }
+.work-priority { color: #346bc3; background: #eef5ff; white-space: nowrap; }
+.work-priority[data-priority="Tinggi"] { color: #9f650d; background: #fff6e5; }
+.work-priority[data-priority="Mendesak"] { color: #bd3f45; background: #fff0f1; }
+.work-priority[data-priority="Rendah"] { color: #68748b; background: #f4f6fa; }
+.work-card-body { flex: 1; min-width: 0; margin-bottom: 20px; }
+.work-project-link { display: inline-flex; align-items: baseline; gap: 5px; max-width: 100%; color: var(--blue); font-size: 12px; line-height: 1.65; transition: color .18s; }
+.work-project-link span { overflow-wrap: anywhere; }
+.work-project-link svg { flex-shrink: 0; }
+.work-project-link:hover { color: #194bb2; text-decoration: underline; text-underline-offset: 3px; }
+.work-card h3 { margin: 8px 0; font-size: 17px; line-height: 1.55; font-weight: 650; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.work-card p.work-description { font-size: 13px; line-height: 1.75; margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.work-date-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; padding: 15px 0; border-top: 1px solid #edf0f6; border-bottom: 1px solid #edf0f6; gap: 12px; }
+.work-date-grid > div { min-width: 0; }
+.work-date-grid dt { display: flex; align-items: center; gap: 6px; font-size: 11px; line-height: 1.5; color: #7a8599; }
+.work-date-grid dt svg { flex-shrink: 0; color: #8999b2; }
+.work-date-grid dd { margin: 6px 0 0; color: #35445f; font-size: 12px; line-height: 1.6; font-weight: 550; overflow-wrap: anywhere; }
+.work-card-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding-top: 18px; }
+.work-card-summary { display: flex; align-items: center; flex-wrap: wrap; gap: 14px 24px; min-width: 0; }
+.work-assignee { display: flex; gap: 9px; align-items: center; }
+.work-assignee-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #f2f4f8; color: #8190a6; flex-shrink: 0; }
+.work-assignee-icon.is-assigned { color: var(--blue); background: #eaf1ff; }
+.work-card-summary small { display: block; font-size: 10px; color: #8590a3; line-height: 1.5; margin-bottom: 3px; }
+.work-card-summary b { display: block; font-size: 12px; color: #53617a; font-weight: 550; overflow-wrap: anywhere; }
+.work-estimate { border-left: 1px solid var(--line); padding-left: 20px; }
+.work-estimate b { color: var(--text); font-variant-numeric: tabular-nums; }
+.work-card-actions { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.work-card-actions .icon-button { width: 34px; height: 34px; border: 1px solid #e7ecf4; border-radius: 8px; color: #738198; background: #fff; transition: background-color .18s, color .18s, border-color .18s; }
+.work-card-actions .icon-button:hover { color: var(--blue); background: #eef4ff; border-color: #c9d9f7; }
+.work-card-actions .icon-button.danger:hover { color: #c1414a; background: #fff1f2; border-color: #f7cdd1; }
+.work-completed { display: flex; align-items: center; gap: 6px; margin-top: 15px; color: #29836c; font-size: 11px; }
+
+/* One clearly defined filter surface, with consistent control heights. */
+.work-toolbar { border: 1px solid var(--line); background: var(--surface); border-radius: 12px; overflow: hidden; margin-top: 4px; }
+.work-status-tabs { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; padding: 12px 16px; border-bottom: 1px solid #edf0f6; }
+.work-status-tab { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 37px; padding: 8px 12px; border-radius: 7px; border: 1px solid transparent; background: transparent; font-size: 12px; font-weight: 550; color: #738096; transition: background-color .18s, color .18s, border-color .18s; }
+.work-status-tab > span { display: grid; place-items: center; min-width: 20px; height: 19px; padding: 0 5px; border-radius: 4px; color: #8792a5; background: #f2f4f8; font-size: 10px; font-variant-numeric: tabular-nums; }
+.work-status-tab:hover { color: var(--blue); background: #f5f8ff; }
+.work-status-tab.active { color: var(--blue); background: #ecf2ff; border-color: #dde8ff; font-weight: 650; }
+.work-status-tab.active > span { color: #fff; background: var(--blue); }
+.work-toolbar-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 14px 16px; }
+.work-project-control { display: flex; align-items: center; gap: 10px; flex: 0 1 300px; min-width: 0; }
+.work-project-control > svg { color: #7e8ba1; flex-shrink: 0; }
+.work-project-control .filter-select { width: 100%; max-width: none; min-width: 0; height: 40px; border-radius: 8px; font-size: 12px; color: #53617a; background: #fff; padding: 0 10px; text-overflow: ellipsis; }
+.work-search.list-search { flex: 1 1 240px; max-width: 380px; height: 40px; min-width: 0; border-radius: 8px; border-color: var(--line); background: #fafbfe; }
+.work-search.list-search input { width: 100%; min-width: 0; font-size: 12px; }
+.work-search > svg { flex-shrink: 0; color: #8c98ae; }
+.work-search:focus-within { border-color: #a7c2fb; background: #fff; }
+.work-clear-search { display: grid; place-items: center; padding: 3px; border-radius: 4px; background: transparent; color: #738096; border: none; }
+.work-clear-search:hover { background: #eaf0fc; color: var(--blue); }
+.work-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; background: transparent; border: 0; color: var(--blue); font-size: 12px; padding: 10px 8px; border-radius: 6px; transition: background-color .18s; }
+.work-reset:hover { background: #eef4ff; }
+.work-results { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin: 19px 1px 13px; color: #8791a3; font-size: 11px; }
+.work-results b { color: #59667d; font-weight: 600; }
+.work-results > span:last-child { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; }
+.work-toolbar :is(button,select):focus-visible, .work-card :is(button,a):focus-visible { outline: 2px solid #527de7; outline-offset: 3px; }
+
+/* Shared menus can wrap instead of separating or overflowing at intermediate widths. */
+.list-toolbar { flex-wrap: wrap; justify-content: flex-start; }
+.list-toolbar > .list-search, .list-toolbar > .toolbar-right { margin-left: auto; }
+.list-toolbar > .filter-tabs { flex-wrap: wrap; min-width: 0; overflow: visible; }
+.sidebar .nav-item > svg { flex-shrink: 0; }
+.sidebar-close { display: none; }
+@media (min-width: 1600px) {
+  .work-toolbar { display: flex; align-items: center; gap: 14px; }
+  .work-status-tabs { flex: 0 0 auto; border-bottom: 0; padding: 14px; }
+  .work-toolbar-controls { flex: 1; min-width: 0; padding: 14px 16px 14px 0; flex-wrap: nowrap; }
+  .work-project-control { flex: 1 1 230px; max-width: 280px; }
+  .work-search.list-search { flex: 1 1 230px; max-width: none; }
+  .work-reset { flex-shrink: 0; }
+}
+@media (max-width: 1200px) { .work-card-list { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 700px) {
+  .work-card { padding: 18px; }
+  .work-card h3 { font-size: 16px; }
+  .work-card-header { gap: 8px; margin-bottom: 16px; }
+  .work-card .status-badge, .work-kind, .work-priority { font-size: 10px; padding: 4px 7px; }
+  .work-card-tags { gap: 5px; }
+  .work-date-grid { gap: 10px; }
+  .work-date-grid dt { font-size: 10px; gap: 4px; flex-wrap: wrap; }
+  .work-date-grid dd { font-size: 11px; }
+  .work-card-summary { gap: 12px; }
+  .work-estimate { padding-left: 12px; }
+  .work-card-actions .icon-button { height: 40px; width: 40px; }
+  .work-status-tabs { padding: 10px; gap: 4px; }
+  .work-status-tab { padding: 8px 9px; font-size: 11px; gap: 6px; min-height: 40px; }
+  .work-toolbar-controls { gap: 10px; padding: 12px; }
+  .work-project-control, .work-search.list-search { flex-basis: 100%; max-width: none; }
+  .work-project-control .filter-select, .work-search.list-search { height: 44px; }
+  .work-search.list-search input, .work-project-control .filter-select { font-size: 14px; }
+  .work-results > span:last-child { display: none; }
+  .sidebar-close { position: absolute; right: 8px; top: 12px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; background: #f2f5fb; color: #65738d; }
+  .sidebar.open .sidebar-brand { padding-right: 25px; }
+  .list-toolbar > .list-search, .list-toolbar > .toolbar-right { margin-left: 0; }
+}
+@media (max-width: 380px) { .work-card-footer { align-items: flex-end; gap: 10px; } .work-card-summary { flex-direction: column; align-items: flex-start; } .work-estimate { padding-left: 41px; border: 0; } }/* Filter tahun */
+.work-project-control.work-year-control { flex: 0 1 170px; }
+@media (min-width: 1100px) { .work-project-control.work-year-control { flex: 0 0 160px; max-width: 170px; } }
+@media (max-width: 760px) { .work-project-control.work-year-control { flex-basis: 100%; max-width: none; } }
+
+/* Clickable revision/maintenance cards open the Kanban task detail. */
+.work-card.is-clickable { cursor: pointer; }
+.work-card.is-clickable:focus-visible { outline: 2px solid #2c63e8; outline-offset: 2px; }
+.work-description-rich { font-size: 13px; line-height: 1.75; overflow-wrap: anywhere; }
+.work-description-rich .rte-editor { cursor: inherit; }
+.work-description-rich .ck-rich-editor img.ck-inline-img { max-height: 180px; object-fit: contain; cursor: inherit; }

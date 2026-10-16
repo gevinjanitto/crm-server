@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="6" time="2.510" timestamp="2026-10-16T07:00:44.336914+00:00" hostname="agent-env-51af6cef-4c66-47da-9af5-38fef4f3d607"><testcase classname="tests.test_maintenance_year_guards" name="test_projects_year_fields_present" time="0.500"><failure message="AssertionError: assert '2026' == '2024'&#10;  &#10;  - 2024&#10;  ?    ^&#10;  + 2026&#10;  ?    ^">backend/tests/test_maintenance_year_guards.py:51: in test_projects_year_fields_present
+    assert m5['completion_year'] == '2024'
+E   AssertionError: assert '2026' == '2024'
+E     
+E     - 2024
+E     ?    ^
+E     + 2026
+E     ?    ^</failure></testcase><testcase classname="tests.test_maintenance_year_guards" name="test_maintenance_blocked_on_unfinished" time="0.181" /><testcase classname="tests.test_maintenance_year_guards" name="test_maintenance_ok_on_selesai" time="0.326" /><testcase classname="tests.test_maintenance_year_guards" name="test_ticket_diterima_blocked_on_unfinished" time="0.858" /><testcase classname="tests.test_maintenance_year_guards" name="test_dashboard_2026_includes_maintenance_value" time="0.071"><failure message="AssertionError: assert 0 == 3500000&#10; +  where 0 = &lt;built-in method get of dict object at 0xffe9f2655840&gt;('maintenance_value')&#10; +    where &lt;built-in method get of dict object at 0xffe9f2655840&gt; = {'value': 293500000, 'development_cost': 128500000, 'server_cost': 15300000, 'other_cost': 0, ...}.get">backend/tests/test_maintenance_year_guards.py:115: in test_dashboard_2026_includes_maintenance_value
+    assert f.get('maintenance_value') == 3500000
+E   AssertionError: assert 0 == 3500000
+E    +  where 0 = &lt;built-in method get of dict object at 0xffe9f2655840&gt;('maintenance_value')
+E    +    where &lt;built-in method get of dict object at 0xffe9f2655840&gt; = {'value': 293500000, 'development_cost': 128500000, 'server_cost': 15300000, 'other_cost': 0, ...}.get</failure></testcase><testcase classname="tests.test_maintenance_year_guards" name="test_dashboard_2024_contains_mh005_original" time="0.117"><failure message="assert 0 == 18500000">backend/tests/test_maintenance_year_guards.py:125: in test_dashboard_2024_contains_mh005_original
+    assert f['value'] == 18500000
+E   assert 0 == 18500000</failure></testcase></testsuite></testsuites>

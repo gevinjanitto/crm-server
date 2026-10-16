@@ -1,0 +1,39 @@
+.notification-channel-name { display:flex; align-items:center; gap:11px; }
+.notification-channel-name svg { color:var(--muted-text); }
+.notification-providers { display:grid; gap:12px; margin-top:22px; }
+.notification-provider { padding:12px 0; border-bottom:1px solid var(--line); }
+.notification-provider > span { display:flex; gap:9px; align-items:center; flex-wrap:wrap; }
+.notification-provider i { width:6px; height:6px; background:#b69145; border-radius:50%; flex-shrink:0; }
+.notification-provider i.provider-ready { background:#229d78; }
+.notification-provider b { font-size:12px; font-weight:600; }
+.notification-provider small { font-size:11px; color:var(--muted-text); margin-left:auto; }
+.notification-provider p { font-size:11px; line-height:1.7; color:var(--muted-text); margin:7px 0 0 15px; overflow-wrap:anywhere; }
+.notification-guide-links { display:flex; flex-wrap:wrap; gap:14px 24px; padding-top:18px; border-top:1px solid var(--line); margin-top:18px; }
+.notification-guide-links a { display:inline-flex; align-items:center; gap:7px; font-size:12px; }
+.notification-settings .notification-registered-email { overflow-wrap:anywhere; }
+.notification-settings .form-note { overflow-wrap:anywhere; }
+.notification-settings .notification-deliveries li { align-items:flex-start; gap:10px; }
+.notification-settings .notification-deliveries small { overflow-wrap:anywhere; }
+@media (max-width:500px) { .notification-settings .notification-deliveries li { flex-direction:column; align-items:flex-start; gap:5px; } .notification-history-head { flex-wrap:wrap; } }.notification-test-row { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:14px; }
+.notification-test-row small { font-size:12px; color:var(--muted-text); }
+.notification-test-dialog { max-width:520px; }
+.notification-test-actions { display:flex; align-items:center; gap:10px; }
+.notification-test-result { margin:4px 0 0; padding:10px 14px; border-radius:10px; font-size:13px; line-height:1.6; }
+.notification-test-result.is-ok { background:#e8f7f1; color:#17785b; }
+.notification-test-result.is-fail { background:#fdeeee; color:#b4302b; }
+.notification-test-subhead { margin:10px 0 0; font-size:13px; font-weight:700; letter-spacing:.2px; }
+.notification-test-list { list-style:none; margin:0; padding:0; display:grid; gap:8px; max-height:320px; overflow-y:auto; }
+.test-delivery { display:flex; gap:12px; align-items:flex-start; padding:11px 12px; border:1px solid var(--line); border-radius:12px; animation:test-row-in .28s ease both; }
+.test-delivery-channel { width:32px; height:32px; border-radius:9px; display:grid; place-items:center; flex-shrink:0; background:#eef3fb; color:#2b4f86; }
+.test-delivery b { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; }
+.test-delivery em { display:inline-flex; align-items:center; gap:4px; font-style:normal; font-size:11px; font-weight:600; padding:2px 8px; border-radius:999px; }
+.test-delivery small { display:block; margin-top:4px; font-size:11px; line-height:1.6; color:var(--muted-text); overflow-wrap:anywhere; }
+.tone-ok em { background:#e8f7f1; color:#17785b; } .tone-fail em { background:#fdeeee; color:#b4302b; }
+.tone-skip em { background:#f1f3f6; color:#5d6878; } .tone-wait em { background:#fff4e0; color:#a0660b; }
+@keyframes test-row-in { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+.notification-daily { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.notification-daily > div { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:4px 8px; padding:12px 14px; border-radius:12px; background:#f3f7fd; border:1px solid var(--line); color:#2b4f86; }
+.notification-daily span { font-size:11px; color:var(--muted-text); }
+.notification-daily b { grid-column:1/-1; font-size:22px; font-weight:700; color:#14284b; line-height:1.1; }
+.notification-daily b small { font-size:12px; font-weight:500; color:var(--muted-text); }
+.notification-daily p { grid-column:1/-1; margin:0; font-size:11px; color:var(--muted-text); }

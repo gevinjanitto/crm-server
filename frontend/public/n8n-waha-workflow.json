@@ -1,0 +1,262 @@
+{
+  "name": "CRM Maiharta - Notifikasi WhatsApp via WAHA",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Sebelum Publish\n1. Webhook CRM: pilih credential Header Auth (X-CRM-Webhook-Secret).\n2. Konfigurasi WAHA: di VPS biarkan http://waha:3000 dan session default.\n3. Kirim via WAHA: pilih credential Header Auth (X-Api-Key).\n4. Pastikan sesi WORKING, uji, lalu Publish/Activate.\n5. Isi URL produksi /webhook/crm-whatsapp pada CRM.\nTidak ada secret di file ini. Jangan aktifkan Retry On Fail: WAHA tidak menjamin deduplikasi. Lihat panduan-notifikasi.md.",
+        "height": 330,
+        "width": 400
+      },
+      "id": "setup-notes",
+      "name": "Petunjuk",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm-whatsapp",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "crm-webhook",
+      "name": "Webhook CRM",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "crm-maiharta-whatsapp"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $input.first().json.body;\nconst fail = (error) => [{json:{ok:false,status:'failed',http_status:422,error}}];\nif (!b || typeof b !== 'object' || Array.isArray(b)) return fail('Body harus JSON object');\nfor (const key of ['notification_id','recipient_id','phone_e164','text']) {\n  if (typeof b[key] !== 'string' || !b[key].trim()) return fail('Field tidak valid: '+key);\n}\nif (!/^\\+[1-9]\\d{7,14}$/.test(b.phone_e164)) return fail('Nomor harus E.164');\nif (b.text.length > 4096 || b.notification_id.length > 150 || b.recipient_id.length > 150) return fail('Payload terlalu panjang');\nreturn [{json:{ok:true,notification_id:b.notification_id,recipient_id:b.recipient_id,project_id:typeof b.project_id==='string'?b.project_id:'',phone_e164:b.phone_e164,text:b.text}}];"
+      },
+      "id": "validate-request",
+      "name": "Validasi payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "payload-is-valid",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "valid-payload",
+      "name": "Payload valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "waha-url",
+              "name": "waha_base_url",
+              "value": "http://waha:3000",
+              "type": "string"
+            },
+            {
+              "id": "waha-session",
+              "name": "waha_session",
+              "value": "default",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "waha-config",
+      "name": "Konfigurasi WAHA",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.waha_base_url.replace(/\\/$/, '') + '/api/sendText' }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { session: $json.waha_session, chatId: $json.phone_e164.substring(1) + '@c.us', text: $json.text } }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "waha-send",
+      "name": "Kirim via WAHA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "onError": "continueRegularOutput",
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const result=$input.first().json;\nconst body=result.body ?? {};\nconst rawId=body.id;\nconst id=typeof rawId==='string'?rawId:(rawId?._serialized || body.key?.id);\nconst accepted=result.statusCode>=200 && result.statusCode<300 && !result.error && !body.error && typeof id==='string' && id.trim().length>0;\nreturn [{json:accepted?{ok:true,status:'accepted',http_status:202,notification_id:$('Validasi payload').first().json.notification_id,message_id:id}:{ok:false,status:'failed',http_status:502,error:'WAHA belum mengonfirmasi pesan. Periksa execution n8n dan sesi WAHA sebelum mencoba ulang.'}}];"
+      },
+      "id": "check-waha",
+      "name": "Konfirmasi WAHA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.http_status }}"
+        }
+      },
+      "id": "crm-response",
+      "name": "Balas ke CRM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1440,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook CRM": {
+      "main": [
+        [
+          {
+            "node": "Validasi payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validasi payload": {
+      "main": [
+        [
+          {
+            "node": "Payload valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload valid?": {
+      "main": [
+        [
+          {
+            "node": "Konfigurasi WAHA",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Balas ke CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfigurasi WAHA": {
+      "main": [
+        [
+          {
+            "node": "Kirim via WAHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kirim via WAHA": {
+      "main": [
+        [
+          {
+            "node": "Konfirmasi WAHA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfirmasi WAHA": {
+      "main": [
+        [
+          {
+            "node": "Balas ke CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all",
+    "executionTimeout": 30
+  },
+  "pinData": {},
+  "tags": []
+}

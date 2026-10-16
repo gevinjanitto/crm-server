@@ -1,0 +1,282 @@
+{
+  "name": "CRM Maiharta - Notifikasi Email via Gmail v2",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## Sebelum Publish (versi 2: email anti-spam)\n1. Nonaktifkan / hapus workflow email lama (path crm-email tidak boleh dobel).\n2. Webhook CRM: credential Header Auth `CRM Webhook Secret`.\n3. Profil Gmail & Kirim via Gmail API: Credential for Gmail OAuth2 API -> pilih credential Gmail yang sudah ada.\n4. Publish / Activate.\nEmail dikirim multipart (teks + HTML), From nama CRM Maiharta, List-Unsubscribe.\nTidak ada secret di file ini.",
+        "height": 320,
+        "width": 440
+      },
+      "id": "setup-notes",
+      "name": "Petunjuk",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "crm-email",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "crm-webhook",
+      "name": "Webhook CRM",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        0,
+        100
+      ],
+      "webhookId": "crm-maiharta-email"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const b = $input.first().json.body;\nconst fail = (error) => [{json:{ok:false,status:'failed',http_status:422,error}}];\nif (!b || typeof b !== 'object' || Array.isArray(b)) return fail('Body harus JSON object');\nfor (const key of ['notification_id','to','subject','html']) {\n  if (typeof b[key] !== 'string' || !b[key].trim()) return fail('Field tidak valid: '+key);\n}\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(b.to)) return fail('Alamat email tidak valid');\nconst text = typeof b.text === 'string' ? b.text : '';\nconst unsub = typeof b.unsubscribe_url === 'string' && /^https:\\/\\/[^\\s<>]+$/.test(b.unsubscribe_url) ? b.unsubscribe_url : '';\nif (b.subject.length > 200 || b.html.length > 60000 || text.length > 20000 || b.notification_id.length > 150) return fail('Payload terlalu panjang');\nconst sender = typeof b.sender_name === 'string' && b.sender_name.trim() ? b.sender_name.trim().slice(0, 80) : 'CRM Maiharta';\nreturn [{json:{ok:true,notification_id:b.notification_id,to:b.to,subject:b.subject,html:b.html,text,unsubscribe_url:unsub,sender_name:sender}}];"
+      },
+      "id": "validate-request",
+      "name": "Validasi payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        240,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "payload-is-valid",
+              "leftValue": "={{ $json.ok }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "valid-payload",
+      "name": "Payload valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/profile",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gmail-profile",
+      "name": "Profil Gmail",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        720,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const v = $('Validasi payload').first().json;\nconst profile = $input.first().json;\nconst from = profile && profile.body && profile.body.emailAddress;\nif (!from) return [{json:{raw:'', error:'Profil Gmail tidak terbaca. Periksa credential Gmail OAuth2.'}}];\nconst enc = (s) => '=?UTF-8?B?' + Buffer.from(s, 'utf8').toString('base64') + '?=';\nconst b64 = (s) => Buffer.from(s, 'utf8').toString('base64').replace(/.{76}/g, '$&\\r\\n');\nconst text = v.text || v.subject;\nconst boundary = 'crm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);\nconst headers = [\n  'From: ' + enc(v.sender_name) + ' <' + from + '>',\n  'To: <' + v.to + '>',\n  'Reply-To: <' + from + '>',\n  'Subject: ' + enc(v.subject),\n  'Date: ' + new Date().toUTCString(),\n  'MIME-Version: 1.0',\n  'X-Entity-Ref-ID: ' + v.notification_id.replace(/[^A-Za-z0-9-]/g, ''),\n];\nif (v.unsubscribe_url) headers.push('List-Unsubscribe: <' + v.unsubscribe_url + '>');\nheaders.push('Content-Type: multipart/alternative; boundary=\"' + boundary + '\"');\nconst mime = headers.concat([\n  '', '--' + boundary, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(text),\n  '--' + boundary, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(v.html),\n  '--' + boundary + '--', '',\n]).join('\\r\\n');\nconst raw = Buffer.from(mime, 'utf8').toString('base64').replace(/\\+/g, '-').replace(/\\//g, '_').replace(/=+$/, '');\nreturn [{json:{raw}}];"
+      },
+      "id": "build-mime",
+      "name": "Susun email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "gmailOAuth2",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { raw: $json.raw } }}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "gmail-send",
+      "name": "Kirim via Gmail API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        0
+      ],
+      "retryOnFail": false
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const r = $input.first().json;\nconst body = r.body || {};\nconst id = typeof body.id === 'string' ? body.id : '';\nconst ok = r.statusCode >= 200 && r.statusCode < 300 && id.trim().length > 0;\nreturn [{json: ok ? {ok:true,status:'accepted',http_status:202,notification_id:$('Validasi payload').first().json.notification_id,message_id:id} : {ok:false,status:'failed',http_status:502,error:'Gmail belum mengonfirmasi pengiriman. Periksa credential Gmail OAuth2 di node Profil Gmail & Kirim via Gmail API.'}}];"
+      },
+      "id": "check-gmail",
+      "name": "Konfirmasi Gmail",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1380,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {
+          "responseCode": "={{ $json.http_status }}"
+        }
+      },
+      "id": "crm-response",
+      "name": "Balas ke CRM",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1600,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook CRM": {
+      "main": [
+        [
+          {
+            "node": "Validasi payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validasi payload": {
+      "main": [
+        [
+          {
+            "node": "Payload valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Payload valid?": {
+      "main": [
+        [
+          {
+            "node": "Profil Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Balas ke CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Profil Gmail": {
+      "main": [
+        [
+          {
+            "node": "Susun email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Susun email": {
+      "main": [
+        [
+          {
+            "node": "Kirim via Gmail API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Kirim via Gmail API": {
+      "main": [
+        [
+          {
+            "node": "Konfirmasi Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Konfirmasi Gmail": {
+      "main": [
+        [
+          {
+            "node": "Balas ke CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all",
+    "executionTimeout": 30
+  },
+  "pinData": {},
+  "tags": []
+}

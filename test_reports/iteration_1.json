@@ -1,0 +1,31 @@
+{
+  "summary": "Verified maintenance guard, year grouping, finance/dashboard, and UI integration end-to-end. All 6 backend pytest tests pass; UI renders year groups, amber maintenance row for MH-005 in 2026, legend, year filter, WorkForm project dropdown restricted to Selesai projects, Finance 2026 shows Rp 3.500.000 maintenance row and Finance 2024 shows MH-005 original Rp 18.5jt.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_maintenance_year_guards.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "project_years.py: logic clean - excludes mongo _id correctly, aggregates maintenance across admin-added maintenances and client tickets with ACCEPTED_TICKETS statuses (including 'Ditutup' only when accepted). Maintenance year = max of maintenance years (latest). Good.",
+    "projects.py line 278: Selesai guard for create_work with kind=maintenances is correctly implemented. Returns clear 400.",
+    "tickets.py line 150-153: Guard for status=='Diterima' blocks transition if project not Selesai; applies to both triage path and client approval path (via the common branch). Confirmed via API tests.",
+    "administration.py line 173: finance.value += maint_value then maintenance_value is set separately. Dashboard clients should read maintenance_value as a sub-component of value - current behaviour matches design intent as described in review request (finance.value includes maintenance_value).",
+    "Login UI: 'login-username' input does not accept Playwright fill() or press_sequentially() reliably (first value stays empty). Password & captcha fields work. Workaround: use native setter + input/change event dispatch via evaluate. Not blocking real users but may hinder automation. Consider ensuring the username field is a plain controlled input without competing focus/animation layers."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_maintenance_year_guards.py (new)"
+  ],
+  "success_rate": { "backend": "100% (6/6)", "frontend": "~95% (all critical UI testids present and populated; project-detail Maintenance tab click was flaky due to ambiguous selector, but backend guard behavior confirmed)" },
+  "test_credentials": "admin / Maiharta2026! (seeded in test_credentials.md). Captcha: GET /api/auth/captcha, sum, POST /api/auth/login with captcha_answer as STRING.",
+  "seed_data_creation": "No destructive seed changes. Tests briefly POST a maintenance on MH-005 and DELETE it. One test ticket (title TEST_block_ticket) is created on an unfinished project and left in 'Ditinjau' status (safe residue, prefix TEST_).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Login via UI requires React-safe native setter for username field (template available in test_maintenance_year_guards.py? no - in Playwright scripts). Backend tests reusable: `cd /app/backend && REACT_APP_BACKEND_URL=... pytest tests/test_maintenance_year_guards.py -o addopts=''` (pytest.ini has -n which fights without xdist args; use -o addopts='').",
+  "rca of the issue": "Not applicable - no production bugs found. All business rules (maintenance guard, year grouping, finance split) behave per spec."
+}

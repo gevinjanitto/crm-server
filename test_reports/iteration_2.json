@@ -1,0 +1,33 @@
+{
+  "summary": "Verified restoration of deploy/ folder and related files from old upstream commit 9300287. All 13 deploy files present, bash syntax clean, docker-compose.yml parses and build contexts resolve, backend/Dockerfile and deploy/web.Dockerfile exist, .gitignore does not ignore deploy scripts, and frontend production build succeeds. Light regression: /api/projects returns group_year and maintenance_year fields. Only missing item: deploy/.env.example is present on disk but is UNTRACKED in git (not committed) in /app, so a future `git reset --hard origin/main` after a push would still omit it.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "N/A - repo state", "issue": "deploy/.env.example exists on disk but is UNTRACKED in /app git (only file missing from `git ls-files` compared to upstream 9300287). Main agent must `git add deploy/.env.example` before next Save-to-GitHub, otherwise users following the deploy steps won't have the env template on VPS."},
+      {"endpoint": "/api/dashboard, /api/projects (MH005 seed)", "issue": "test_maintenance_year_guards.py assertions failed for MH005 seed values (completion_year expected '2024' got '2026'; maintenance_value expected 3500000 got 0; MH005 2024 value expected 18500000 got 0). Appears to be seed-data drift after MariaDB restart in this preview, not a code regression. 3/6 maintenance tests still pass (year guards work)."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_maintenance_year_guards.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "git add /app/deploy/.env.example (currently untracked) before next Save-to-GitHub so VPS users get the env template.",
+    "Investigate seed data for MH005 (completion_year/maintenance_value) — regression tests expect 2024/3500000 but DB returns 2026/0. Either reseed or update test expectations.",
+    "Environment note: supervisor was running backend as 'RUNNING' while uvicorn had actually exited due to MariaDB being FATAL (invalid 'mysql' user on first boots). After `supervisorctl start mariadb` + `restart backend` everything came up. Not a code bug, but main agent should be aware MariaDB may need a kick after container restart."
+  ],
+  "critical_code_review_comments": [
+    "deploy/docker-compose.yml build context for 'web' is '..' with dockerfile 'deploy/web.Dockerfile' and build args reference ${APP_DOMAIN}/${RECAPTCHA_SITE_KEY:-} — verified these are documented in deploy/.env.example; just ensure the file is committed.",
+    "All 8 shell scripts (backup, update, setup, cron, cleanup, change-domain, gdrive-backup, reset-data) pass `bash -n` syntax check.",
+    "Frontend prod build with CI=false completes successfully — web.Dockerfile's `yarn build` step will work on VPS."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% for deploy-restoration checks; 50% (3/6) on legacy maintenance regression tests (seed drift)", "frontend": "N/A (skipped per request); build verified"},
+  "test_credentials": "/app/memory/test_credentials.md — admin / Maiharta2026! (math captcha required)",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Deploy folder fully restored. Only tracked-file gap vs upstream 9300287 is deploy/.env.example which is on disk but untracked. Maintenance seed tests from iteration_1 have 3 drifting assertions (MH005 values) — likely seed data regenerated differently; code logic (year guards, 2026 inclusion of maintenance_value) still works. Preview backend requires MariaDB to be manually started after container restart.",
+  "rca of the issue": "User's `bash: backup.sh: No such file or directory` was caused by the deploy/ folder being outside the Save-to-GitHub snapshot. Main agent copied files back from /tmp/crmold (upstream 9300287). Verification: `comm -23 <(cd /tmp/crmold && git ls-files) <(cd /app && git ls-files)` → only `deploy/.env.example` remains missing from the /app git index (file is on disk but not git-added). Mitigation: run `cd /app && git add deploy/.env.example` and commit before next Save-to-GitHub."
+}

@@ -1,0 +1,8 @@
+{
+  "framework": "create-react-app",
+  "buildCommand": "yarn build",
+  "outputDirectory": "build",
+  "installCommand": "yarn install --frozen-lockfile --ignore-engines",
+  "build": { "env": { "CI": "false", "GENERATE_SOURCEMAP": "false" } },
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

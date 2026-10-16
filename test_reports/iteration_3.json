@@ -1,0 +1,28 @@
+{
+  "summary": "Backend-only (shell script) testing of deploy/gdrive-backup.sh retry mechanism. Verified pending marker lifecycle, --retry no-op/retry-until-success behavior, --install-cron systemd unit generation (daily + 15-minute retry timer), simulator across all modes (retryflow, ok, mysqlfail, drivefail), bash syntax check, .gitignore coverage, and docs. All checks pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/tests/gdrive_backup_sim.sh"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Line 86: when --retry runs and another backup already holds the flock, the script silently exits 0 without logging (intentional for timer noise reduction, but a single-line log entry would help diagnosis).",
+    "cp .env \"$OUT/env.txt\" (line 110) packages the full .env (including GDRIVE_TOKEN/CLIENT_SECRET) into every tar uploaded to Drive. Acceptable if Drive folder is private, but worth noting as a confidentiality risk."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100%", "frontend": "n/a"},
+  "test_credentials": "none required",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Simulator at /app/tests/gdrive_backup_sim.sh covers retry flow, ok, mysqlfail, drivefail. For --install-cron verification without real systemd, copy /app/deploy to a tmpdir, sed-replace /etc/systemd/system to a tmp path, and stub systemctl+crontab in PATH (see iteration_3 testing steps). Expected: 4 units written (crm-gdrive-backup.service/.timer with OnCalendar=*-*-* 00:00:00 <TZ>, crm-gdrive-backup-retry.service with ExecStart including --retry, crm-gdrive-backup-retry.timer with OnCalendar=*:0/15), systemctl daemon-reload + enable --now on both timers.",
+  "verifications": {
+    "bash_syntax": "bash -n gdrive-backup.sh and gdrive_backup_sim.sh both OK",
+    "simulator_retryflow": "STEP0 EXIT=0 PENDING=no UPLOADS=0; STEP1 EXIT=1 PENDING=yes UPLOADS=0; STEP2 EXIT=1 PENDING=yes UPLOADS=0; STEP3 EXIT=0 PENDING=no UPLOADS=1; STEP4 EXIT=0 PENDING=no UPLOADS=1 — matches spec",
+    "simulator_ok": "EXIT=0 PENDING=no, tar uploaded with env.txt+mysql.sql.gz+3 volume tars",
+    "simulator_mysqlfail": "EXIT=1 PENDING=yes (marker retained on backup.sh failure)",
+    "simulator_drivefail": "EXIT=1 PENDING=yes (marker retained on rclone failure)",
+    "install_cron_units": "All 4 units generated with correct OnCalendar values; retry service ExecStart includes --retry; systemctl enable --now called on both timers; legacy crontab line removed",
+    "gitignore": "deploy/.gdrive-backup.pending present (line 115)",
+    "docs": "DEPLOY_IDCLOUDHOST.md explains the retry marker + 15-min retry timer"
+  }
+}

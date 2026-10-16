@@ -1,0 +1,21 @@
+import React, { useState } from 'react';
+import { ChevronLeft, ChevronRight, Users } from 'lucide-react';
+import { addDays, format, parseISO } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { useData } from '../../lib/api';
+import { Loading, ErrorState } from '../Common';
+import { Avatar } from '../kanban/TaskCard';
+import { WorkspaceHead, useMutation, EmptyWorkspace } from './WorkspaceUI';
+import { CapacityInput } from './CapacityInput';
+
+export const WorkloadPage = ({ p, manager }) => {
+  const [week, setWeek] = useState(format(new Date(), 'yyyy-MM-dd')); const base = `/projects/${p.id}/workspace`;
+  const workload = useData(`${base}/workload?week=${week}`), navigate = useNavigate(); const { run } = useMutation(workload.reload);
+  if (workload.loading && !workload.data) return <Loading />; if (workload.error) return <ErrorState error={workload.error} reload={workload.reload} />;
+  const data = workload.data, names = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum'];
+  return <div data-testid="workload-page"><WorkspaceHead id="workload" title="Kapasitas tim" subtitle="Alokasi jam per minggu · Senin–Jumat"><div className="pw-week-nav"><button className="pw-icon" data-testid="workload-prev" title="Minggu sebelumnya" onClick={() => setWeek(format(addDays(parseISO(week), -7), 'yyyy-MM-dd'))}><ChevronLeft size={17} /></button><span data-testid="workload-week">{data.start} — {data.end}</span><button className="pw-icon" data-testid="workload-next" title="Minggu berikutnya" onClick={() => setWeek(format(addDays(parseISO(week), 7), 'yyyy-MM-dd'))}><ChevronRight size={17} /></button><input type="date" data-testid="workload-date" aria-label="Pilih minggu" value={week} onChange={e => e.target.value && setWeek(e.target.value)} /></div></WorkspaceHead>
+    <div className="pw-stat-band"><div data-testid="workload-total"><small>Terjadwal</small><b>{data.people.reduce((a, x) => a + x.hours, 0).toFixed(1)}<span> jam</span></b></div><div data-testid="workload-capacity"><small>Kapasitas</small><b>{data.people.reduce((a, x) => a + x.capacity, 0)}<span> jam</span></b></div><div data-testid="workload-overloaded"><small>Melebihi kapasitas</small><b>{data.people.filter(x => x.hours > x.capacity).length}<span> anggota</span></b></div><div data-testid="workload-unassigned"><small>Tanpa PIC</small><b>{data.unassigned}<span> task</span></b></div></div>
+    {!data.people.length && <EmptyWorkspace title="Belum ada developer dalam project" id="workload-empty" />}
+    <div className="pw-workload-table"><div className="pw-workload-row header"><span>ANGGOTA</span>{names.map((n, i) => <span key={n}>{n}<small>{format(addDays(parseISO(data.start), i), 'dd MMM')}</small></span>)}<span>TOTAL / KAPASITAS</span></div>{data.people.map(person => <div className="pw-workload-row" key={person.id} data-testid={`workload-person-${person.id}`}><button className="pw-workload-person" data-testid={`workload-tasks-${person.id}`} onClick={() => navigate(`/projects/${p.id}/kanban?assignee=${person.id}`)}><Avatar name={person.name} size={30} /><span><b>{person.name}</b><small>{person.task_ids.length} task terjadwal{person.unestimated > 0 ? ` · ${person.unestimated} tanpa estimasi` : ''}{person.unscheduled > 0 ? ` · ${person.unscheduled} tanpa jadwal` : ''}</small></span></button>{person.days.map((hours, i) => <div className={`pw-heat-cell ${hours > person.capacity / 5 ? 'over' : hours ? 'allocated' : ''}`} key={i} data-testid={`workload-day-${person.id}-${i}`}><b>{hours || '—'}</b><small>jam</small></div>)}<div className="pw-capacity-cell"><b className={person.hours > person.capacity ? 'pw-danger' : ''} data-testid={`workload-hours-${person.id}`}>{person.hours} / {person.capacity} jam</b><div className="pw-progress"><i style={{ width: `${Math.min(100, person.capacity ? person.hours / person.capacity * 100 : person.hours ? 100 : 0)}%`, background: person.hours > person.capacity ? '#e5484d' : '#2c63e8' }} /></div>{manager && <label><span>Kapasitas</span><CapacityInput person={person} save={hours => run('post', `${base}/capacity`, { user_id: person.id, hours })} /></label>}</div></div>)}</div>
+  </div>;
+};
