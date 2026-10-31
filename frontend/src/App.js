@@ -1,57 +1,194 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
-import { HOME } from "@/constants/testIds";
+import React from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+} from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "./components/AuthProvider";
+export { useAuth } from "./components/AuthProvider";
+import Login from "./pages/Login";
+import Layout from "./components/Layout";
+import Dashboard from "./pages/Dashboard";
+import Projects from "./pages/Projects";
+import ProjectDetail from "./pages/ProjectDetail";
+import Clients from "./pages/Clients";
+import Tickets from "./pages/Tickets";
+import Finance from "./pages/Finance";
+import WorkList from "./pages/WorkList";
+import Users from "./pages/Users";
+import Settings from "./pages/Settings";
+import Trash from "./pages/Trash";
+import Audit from "./pages/Audit";
+import Notifications from "./pages/Notifications";
+import NotificationGuide from './pages/NotificationGuide';
+import Inbox from './pages/Inbox';
+import Reminders from './pages/Reminders';
+import Glossary from './pages/Glossary';
+import Notes from './pages/Notes';
+import PersonalNotes from './pages/PersonalNotes';
+import OAuthAuthorize from './pages/OAuthAuthorize';
+import LegalPage from './pages/LegalPage';
+import SharePage from './pages/SharePage';
+import { CodeLoader } from './components/CodeLoader';
+import { BrandIntro } from './components/BrandIntro';
+import "./App.css";
+import "./modern.css";
+import "./kanban.css";
+import "./fixes.css";
+import "./interaction.css";
+import "./components/barong.css";
+import "./components/code-loading.css";
+import "./work-care.css";
+import "./brand-experience.css";
+import './requested-features.css';
+import './components/status-picker.css';
+import './reminder-inbox.css';
+import { PROJECT_LIST_ROLES } from './lib/projectAccess';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
-
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
-
+function Protected({ children, roles }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading)
+    return (
+      <div className="app-loading auth-code-loading" data-testid="app-loading" role="status" aria-busy="true" aria-live="polite">
+        <CodeLoader testId="auth-loading-code-animation" />
+        <p data-testid="auth-loading-caption">Menyiapkan ruang kerja Anda...</p>
+      </div>
+    );
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.must_change_password && location.pathname !== "/settings")
+    return <Navigate to="/settings" replace />;
+  if (roles && !roles.includes(user.role)) return <Navigate to="/" replace />;
+  return children;
+}
+export default function App() {
   return (
-    // The marker attribute below lets the platform probe detect the stock splash — remove it with this page
-    <div data-emergent-splash>
-      <header className="App-header">
-        <a
-          data-testid={HOME.emergentLink}
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <BrandIntro>
+        <Toaster richColors position="top-right" />
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/oauth/authorize" element={<OAuthAuthorize />} />
+          <Route path="/s/:token" element={<SharePage />} />
+          <Route path="/privacy" element={<LegalPage kind="privacy" />} />
+          <Route path="/terms" element={<LegalPage kind="terms" />} />
+          <Route path="/support" element={<LegalPage kind="support" />} />
+          <Route
+            element={
+              <Protected>
+                <Layout />
+              </Protected>
+            }
+          >
+            <Route index element={<Dashboard />} />
+            <Route path="projects" element={<Protected roles={PROJECT_LIST_ROLES}><Projects /></Protected>} />
+            <Route path="projects/:id" element={<ProjectDetail />} />
+            <Route path="projects/:id/:section" element={<ProjectDetail />} />
+            <Route path="kanban" element={<Navigate to="/projects" replace />} />
+            <Route
+              path="clients"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Accounting"]}>
+                  <Clients />
+                </Protected>
+              }
+            />
+            <Route
+              path="tickets"
+              element={
+                <Protected
+                  roles={["Admin", "Admin Project", "Developer", "Client"]}
+                >
+                  <Tickets />
+                </Protected>
+              }
+            />
+            <Route
+              path="finance"
+              element={
+                <Protected roles={["Admin", "Accounting"]}>
+                  <Finance />
+                </Protected>
+              }
+            />
+            <Route
+              path="revisions"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Developer"]}>
+                  <WorkList kind="revisions" />
+                </Protected>
+              }
+            />
+            <Route
+              path="glossary"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Developer"]}>
+                  <Glossary />
+                </Protected>
+              }
+            />
+            <Route
+              path="maintenance"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Developer"]}>
+                  <WorkList kind="maintenances" />
+                </Protected>
+              }
+            />
+            <Route
+              path="notes"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Developer"]}>
+                  <Notes />
+                </Protected>
+              }
+            />
+            <Route
+              path="my-notes"
+              element={
+                <Protected roles={["Admin", "Admin Project", "Developer"]}>
+                  <PersonalNotes />
+                </Protected>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <Protected roles={["Admin"]}>
+                  <Users />
+                </Protected>
+              }
+            />
+            <Route path="settings" element={<Settings />} />
+            <Route path="settings/notifications-guide" element={<NotificationGuide/>} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="reminders" element={<Protected roles={["Admin"]}><Reminders /></Protected>} />
+            <Route
+              path="trash"
+              element={
+                <Protected roles={["Admin", "Admin Project"]}>
+                  <Trash />
+                </Protected>
+              }
+            />
+            <Route
+              path="audit"
+              element={
+                <Protected roles={["Admin"]}>
+                  <Audit />
+                </Protected>
+              }
+            />
           </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
-    </div>
+        </BrandIntro>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
-
-export default App;

@@ -31,6 +31,14 @@ dist/
 dist
 
 # Environment files (comprehensive coverage)
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend/.env
+!.env.example
+!frontend/.env.production
+memory/test_credentials.md
 
 *token.json*
 *credentials.json*
@@ -83,3 +91,28 @@ android-sdk/
 
 # overlay black-box crash/user-report dumps — session data, never history
 **/.emergent/recordings/
+frontend/node_modules/.cache/default-development/2.pack
+frontend/node_modules/.cache/default-development/3.pack
+frontend/node_modules/.cache/default-development/5.pack
+frontend/node_modules/.cache/default-development/0.pack
+
+# Secrets lokal (isi di Railway Variables, jangan di-commit)
+backend/.env
+frontend/node_modules/.cache/default-development/2.pack_
+frontend/node_modules/.cache/default-development/1.pack
+frontend/node_modules/.cache/default-development/4.pack
+
+deploy/backups/
+
+deploy/backups/
+backend/uploads/
+frontend/node_modules/.cache/default-development/6.pack
+
+# Google Drive backup
+deploy/gdrive-service-account.json
+deploy/gdrive-backup.log
+deploy/.gdrive-backup.lock
+deploy/.gdrive-backup.pending
+frontend/node_modules/.cache/default-development/3.pack_
+.mariadb-data/
+.mariadb-data/ib_logfile0

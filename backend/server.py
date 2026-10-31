@@ -1,89 +1,118 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import asyncio
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List
-import uuid
-from datetime import datetime, timezone
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, APIRouter
+from starlette.middleware.cors import CORSMiddleware
+from core import db, client, sync_task_members
+from auth import router as auth_router
+from projects import router as projects_router
+from administration import router as admin_router
+from tickets import router as tickets_router
+from kanban import router as kanban_router
+from finance import router as finance_router
+from audit import router as audit_router
+from notify import router as notify_router
+from task_workspace import router as task_workspace_router
+from workspace_structure import router as structure_router
+from workspace_collab import router as collab_router
+from workspace_planning import router as planning_router
+from workspace_automation import router as automation_router
+from workspace_scheduler import router as schedule_router
+from seed import seed, seed_cost_types, backfill_tasks, migrate
+from account_notifications import router as account_notifications_router
+from reminders import router as reminders_router
+from inbox import router as inbox_router
+from task_media import router as task_media_router
+from notification_controls import router as notification_controls_router
+from notification_delivery import flush_notification_queue
+from glossary import router as glossary_router
+from maintenance_groups import router as maintenance_groups_router
+from maintenance_details import router as maintenance_details_router
+from notes import router as notes_router
+from personal_notes import router as personal_notes_router
+from my_tasks import router as my_tasks_router
+from maintenance_details import merge_details
+from ai_settings import router as ai_settings_router
+from api_tokens import router as api_tokens_router
+from ai_tools import router as ai_tools_router
+from mcp_server import router as mcp_router
+from oauth import router as oauth_router
+from assistant import router as assistant_router
+from file_shares import router as file_shares_router
+from push import router as push_router
+from whatsapp_templates import router as whatsapp_templates_router
 
+async def queue_loop():
+    while True:
+        await asyncio.sleep(60)
+        try: await flush_notification_queue()
+        except Exception: logging.exception('Antrean notifikasi gagal diproses')
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
-
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-# Create the main app without a prefix
-app = FastAPI()
-
-# Create a router with the /api prefix
-api_router = APIRouter(prefix="/api")
-
-
-# Define Models
-class StatusCheck(BaseModel):
-    model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.model_dump()
-    status_obj = StatusCheck(**status_dict)
-    
-    # Convert to dict and serialize datetime to ISO string for MongoDB
-    doc = status_obj.model_dump()
-    doc['timestamp'] = doc['timestamp'].isoformat()
-    
-    _ = await db.status_checks.insert_one(doc)
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    # Exclude MongoDB's _id field from the query results
-    status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
-    
-    # Convert ISO string timestamps back to datetime objects
-    for check in status_checks:
-        if isinstance(check['timestamp'], str):
-            check['timestamp'] = datetime.fromisoformat(check['timestamp'])
-    
-    return status_checks
-
-# Include the router in the main app
-app.include_router(api_router)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
+@asynccontextmanager
+async def lifespan(app):
+    for attempt in range(30):  # tunggu MySQL siap saat container/pod baru menyala
+        try:
+            await db.users.create_index('username', unique=True); break
+        except Exception:
+            if attempt == 29: raise
+            logging.warning('MySQL belum siap, mencoba lagi...'); await asyncio.sleep(2)
+    await db.users.create_index('id', unique=True)
+    await db.projects.create_index('id', unique=True)
+    await db.captchas.create_index('expires_at', expireAfterSeconds=0)
+    await db.sessions.create_index('expires_at', expireAfterSeconds=0)
+    await db.login_attempts.create_index('created_at', expireAfterSeconds=600)
+    await db.tasks.create_index('project_id')
+    await db.tickets.create_index([('project_id', 1), ('assigned_to', 1), ('status', 1)])
+    await db.task_views.create_index([('project_id', 1), ('user_id', 1)])
+    await db.tasks.create_index('id', unique=True)
+    for collection in ['workspace_nodes', 'workspace_fields', 'task_templates', 'workspace_docs', 'doc_versions', 'workspace_goals', 'workspace_rules', 'automation_logs', 'workspace_capacity', 'task_schedules']:
+        await db[collection].create_index('project_id')
+    try: await merge_details([p['id'] for p in await db.projects.find({}, {'_id': 0, 'id': 1}).to_list(100000)])
+    except Exception: logging.exception('Gagal menggabungkan rincian maintenance lama')
+    await db.workspace_boards.create_index('project_id', unique=True)
+    await db.workspace_sprints.create_index('project_id', unique=True, partialFilterExpression={'status': 'active'})
+    for collection in ['task_schedules', 'workspace_capacity', 'cron_runs', 'scheduler_locks', 'scheduler_events']:
+        await db[collection].create_index('id', unique=True)
+    await db.activity_logs.create_index('created_at')
+    await db.trash.create_index('deleted_at')
+    await db.notifications.create_index([('user_id', 1), ('read', 1), ('created_at', -1)])
+    await db.notification_deliveries.create_index([('user_id', 1), ('created_at', -1)])
+    await db.notification_deliveries.create_index('provider_id', sparse=True)
+    await db.workspace_nodes.create_index('id', unique=True)
+    await db.project_reminders.create_index('id', unique=True)
+    await db.project_reminders.create_index('project_id')
+    await db.inbox_reads.create_index('id', unique=True)
+    await db.inbox_hidden.create_index('id', unique=True)
+    for collection in ['personal_docs', 'api_tokens', 'oauth_clients', 'oauth_codes', 'assistant_conversations', 'app_settings']:
+        await db[collection].create_index('id', unique=True)
+    await db.api_tokens.create_index('token_hash')
+    await db.push_subscriptions.create_index('user_id')
+    await seed()
+    await seed_cost_types()
+    await backfill_tasks()
+    await migrate()
+    for pid in await db.projects.distinct('id'):
+        await sync_task_members(pid)
+    await db.notification_queue.create_index('id', unique=True)
+    await db.notification_deliveries.create_index([('notification_id', 1), ('channel', 1)])
+    worker = asyncio.create_task(queue_loop())
+    yield
+    worker.cancel()
     client.close()
+
+app = FastAPI(title='CRM Maiharta', lifespan=lifespan)
+api = APIRouter(prefix='/api')
+@api.get('/')
+async def root(): return {'name': 'CRM Maiharta', 'status': 'ok'}
+@api.get('/health')
+async def health(): return {'status': 'ok'}
+for r in [auth_router, admin_router, projects_router, tickets_router, kanban_router, task_workspace_router, structure_router, collab_router, planning_router, automation_router, schedule_router, finance_router, audit_router, notify_router, account_notifications_router, reminders_router, inbox_router, task_media_router, notification_controls_router, glossary_router, maintenance_groups_router, maintenance_details_router, notes_router, personal_notes_router, my_tasks_router, ai_settings_router, api_tokens_router, ai_tools_router, mcp_router, oauth_router, assistant_router, file_shares_router, push_router, whatsapp_templates_router]: api.include_router(r)
+app.include_router(api)
+app.include_router(oauth_router)
+
+origins = [o.strip() for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()]
+if os.environ.get('APP_ORIGIN'): origins.append(os.environ['APP_ORIGIN'])
+cors = {'allow_origin_regex': '.*'} if '*' in origins or not origins else {'allow_origins': origins}
+app.add_middleware(CORSMiddleware, allow_credentials=True, allow_methods=['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'], allow_headers=['Content-Type', 'Authorization', 'Mcp-Session-Id', 'Mcp-Protocol-Version'], **cors)
+logging.basicConfig(level=logging.INFO)

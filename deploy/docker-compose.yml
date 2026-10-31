@@ -1,0 +1,100 @@
+name: crm-maiharta
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      TZ: UTC
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci", "--innodb-buffer-pool-size=256M", "--max-allowed-packet=64M"]
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    build: ../backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      UPLOAD_DIR: /data/uploads
+      JWT_SECRET: ${JWT_SECRET}
+      SEED_PASSWORD: ${SEED_PASSWORD}
+      SEED_SAMPLE_DATA: ${SEED_SAMPLE_DATA:-true}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_WHATSAPP_NUMBER: ${ADMIN_WHATSAPP_NUMBER:-}
+      CORS_ORIGINS: https://${APP_DOMAIN}
+      APP_URL: https://${APP_DOMAIN}
+      WEBHOOK_CRON_SECRET: ${WEBHOOK_CRON_SECRET}
+      MAIL_SENDER_NAME: ${MAIL_SENDER_NAME}
+      EMAIL_ENABLED: ${EMAIL_ENABLED}
+      GMAIL_CLIENT_ID: ${GMAIL_CLIENT_ID:-}
+      GMAIL_CLIENT_SECRET: ${GMAIL_CLIENT_SECRET:-}
+      GMAIL_REFRESH_TOKEN: ${GMAIL_REFRESH_TOKEN:-}
+      GMAIL_SENDER: ${GMAIL_SENDER:-}
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_API_KEY_SID: ${TWILIO_API_KEY_SID:-}
+      TWILIO_API_KEY_SECRET: ${TWILIO_API_KEY_SECRET:-}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-}
+      TWILIO_CONTENT_SID: ${TWILIO_CONTENT_SID:-}
+      TWILIO_STATUS_CALLBACK: ${TWILIO_STATUS_CALLBACK:-}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+    volumes:
+      - uploads:/data/uploads
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: https://${APP_DOMAIN}
+        REACT_APP_RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+      SERVER_IP: ${SERVER_IP}
+      ACME_EMAIL: ${ADMIN_EMAIL}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+  cron:
+    image: curlimages/curl:latest
+    restart: unless-stopped
+    depends_on: [backend]
+    environment:
+      WEBHOOK_CRON_SECRET: ${WEBHOOK_CRON_SECRET}
+    volumes:
+      - ./cron.sh:/cron.sh:ro
+    entrypoint: ["sh", "/cron.sh"]
+
+volumes:
+  mysql_data:
+  uploads:
+  caddy_data:
+  caddy_config:

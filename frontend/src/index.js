@@ -14,6 +14,16 @@ const queryClient = new QueryClient({
 });
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
+// PWA: service worker untuk notifikasi web + simpan prompt "Pasang aplikasi".
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("/sw.js").catch(() => {}));
+}
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  window.__installPrompt = e;
+  window.dispatchEvent(new Event("install-available"));
+});
 root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
