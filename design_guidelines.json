@@ -1,0 +1,75 @@
+{
+  "theme": "dark",
+  "typography": {
+    "headings": "Cabinet Grotesk or Outfit for display tension. If bound to existing (e.g., Inter), apply tracking-tight for elegance.",
+    "body": "IBM Plex Sans or JetBrains Mono for developer/software house aesthetic. Keep text readable with balanced line-height.",
+    "weights": "Radical weight contrast (e.g., Light vs Black). Use font-medium for standard tech tags.",
+    "rules": "Avoid default Vercel-look. No center-aligned blocks for dense text; prioritize left-alignment."
+  },
+  "colors": {
+    "archetype": "ARCHETYPE 4: SWISS & HIGH-CONTRAST (Authority, Clarity, Truth) mixed with ARCHETYPE 5: LUXURY",
+    "primary": "#FFFFFF",
+    "background": "#0A0A0A",
+    "accents": {
+      "brand": "#7d9de2",
+      "success": "#4caf50",
+      "tech_border": "rgba(255, 255, 255, 0.1)",
+      "tech_bg": "rgba(255, 255, 255, 0.05)"
+    },
+    "surface": "Crystal Glass (backdrop-blur-xl, saturate-150, 1px subtle border) for floating tech elements."
+  },
+  "grids": {
+    "settings_grid": "grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 2rem; align-items: start;"
+  },
+  "layouts": {
+    "settings_page": {
+      "component_path": "/app/frontend/src/pages/Settings.jsx",
+      "css_path": "/app/frontend/src/App.css",
+      "instruction": "Make settings layout full-width to resolve the 'half-screen' issue. In App.css, remove 'max-width: 750px' from '.settings-layout'. Apply 'width: 100%; max-width: 1200px; display: grid;' using the settings_grid defined above. This ensures panels utilize the full screen width gracefully."
+    },
+    "login_page": {
+      "component_path": "/app/frontend/src/pages/Login.jsx",
+      "instruction": "Integrate software house & developer visual assets gracefully around the existing Barong Mascot. Use asymmetrical floating 'tech pills' behind or beside the mascot to convey tech-driven elegance without cluttering."
+    }
+  },
+  "visual_enhancers": {
+    "login_developer_assets": [
+      {
+        "element": "Tech Tag 1 (Top Right)",
+        "description": "Floating pill. Text: '[200 OK] build: success'. Style: Monospace font, text-xs, glowing green dot, glassmorphism background (backdrop-blur-md, border-white/10). Use framer-motion for a gentle, slow float."
+      },
+      {
+        "element": "Tech Tag 2 (Bottom Left)",
+        "description": "Floating pill. Text: '< / > API V2 Active'. Style: Monospace font, text-xs, glassmorphism background. Gentle float animation."
+      },
+      {
+        "element": "Tech Tag 3 (Middle Right)",
+        "description": "Floating pill. Text: 'git branch --main'. Include a small GitBranch lucide icon. Glassmorphism style."
+      }
+    ]
+  },
+  "modifications": {
+    "clickup_removal": {
+      "component_path": "/app/frontend/src/pages/Settings.jsx",
+      "instruction": "Remove the 'Impor ClickUp' Link element (<Link to='/imports/clickup'>...) from the bottom of the Settings component entirely."
+    }
+  },
+  "content_updates": {
+    "notification_setup_guide": {
+      "target_file": "/app/frontend/public/panduan-notifikasi.md"
+    }
+  },
+  "motion": {
+    "floating_tags": "Use framer-motion for the login developer tags: animate={{ y: [0, -10, 0] }} transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }} with staggered delays."
+  },
+  "accessibility": {
+    "focus_states": "Must have HIGHER contrast than default state (e.g., focus:ring-2 focus:ring-blue-300).",
+    "test_ids": "Ensure new components like floating tags include 'aria-hidden=\"true\"' as they are decorative. Remove 'data-testid=\"settings-clickup-import\"' element."
+  },
+  "media": {
+    "images": "Retain BarongMascot as is. Do not add heavy images; use clean CSS/Lucide icons for developer elements."
+  },
+  "3d_libraries_and_steps": null,
+  "image_urls": [],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": "1. Prioritize pre-existing UI components from src/components/ui. 2. Do not use generic AI emojis. 3. Ensure 'data-testid' is added to all new interactive/informational elements. 4. Build depth through layered design elements with z-index hierarchy. 5. Maintain Barong interactions on the login page; the new tech tags should be purely decorative and elegant. 6. Address CSS strictly to remove max-width constraints on the Settings layout."
+}

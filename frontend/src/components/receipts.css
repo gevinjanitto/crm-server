@@ -1,0 +1,68 @@
+.receipt-modal { max-width: 780px !important; max-height: 92vh; overflow-y: auto; }
+.receipt-form { display: flex; flex-direction: column; gap: 16px; }
+.receipt-label { font-weight: 550; color: var(--muted-text); font-size: 14.5px; }
+.receipt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+.receipt-logo-picker { display: flex; flex-direction: column; gap: 8px; }
+.receipt-logo-row { display: flex; align-items: center; gap: 12px; }
+.receipt-logo-preview { width: 64px; height: 64px; border: 1px dashed var(--line); border-radius: 8px; display: grid; place-items: center; overflow: hidden; color: var(--muted-text); background: var(--bg); }
+.receipt-logo-preview img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.receipt-upload-btn { cursor: pointer; display: inline-flex; align-items: center; }
+.receipt-items { display: flex; flex-direction: column; gap: 10px; }
+.receipt-item-row { display: grid; grid-template-columns: 1fr 72px 190px 36px; gap: 8px; align-items: start; }
+.receipt-item-row textarea, .receipt-item-row > input { border: 1px solid var(--line); background: var(--bg); border-radius: 5px; padding: 9px 11px; font: inherit; min-width: 0; }
+.receipt-add-item { align-self: flex-start; display: inline-flex; gap: 6px; align-items: center; }
+.receipt-taxes { display: flex; gap: 24px; flex-wrap: wrap; }
+.receipt-tax { display: inline-flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.receipt-tax input[type="number"] { width: 70px; border: 1px solid var(--line); background: var(--bg); border-radius: 5px; padding: 7px 9px; }
+.receipt-summary { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; font-size: 14px; }
+.receipt-summary b { margin-left: 4px; }
+.receipt-total { margin-left: auto; color: #2454bf; }
+.receipt-actions { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+.receipt-actions .secondary-button { display: inline-flex; gap: 5px; align-items: center; padding: 6px 10px; font-size: 13px; }
+@media (max-width: 640px) {
+  .receipt-item-row { grid-template-columns: 1fr 64px 36px; }
+  .receipt-item-row .money-input { grid-column: 1 / 3; }
+  .receipt-total { margin-left: 0; }
+}
+.doc-modal { max-width: min(1320px, 96vw) !important; width: 96vw; }
+.doc-editor { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 24px; align-items: start; }
+.doc-preview-wrap { position: sticky; top: 0; display: flex; flex-direction: column; gap: 8px; }
+.doc-preview-bar { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted-text); }
+.doc-preview-bar b { color: var(--text, inherit); font-size: 14px; }
+.doc-dot { width: 8px; height: 8px; border-radius: 50%; background: #2454bf; animation: docpulse 0.9s ease-in-out infinite; }
+@keyframes docpulse { 50% { opacity: 0.25; } }
+.doc-page { position: relative; width: 100%; background: #fff; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18), 0 12px 32px rgba(15, 23, 42, 0.12); border-radius: 2px; overflow: hidden; font-family: Helvetica, Arial, sans-serif; color: #263449; }
+.doc-el { position: absolute; }
+.doc-text { white-space: pre; overflow: visible; }
+.doc-text.is-editable { cursor: text; border-radius: 2px; outline: 1px dashed transparent; transition: outline-color 0.15s, background-color 0.15s; }
+.doc-text.is-editable:hover { outline-color: rgba(36, 84, 191, 0.55); background-color: rgba(36, 84, 191, 0.06); }
+.doc-img img { width: 100%; height: 100%; object-fit: contain; display: block; pointer-events: none; user-select: none; }
+.doc-img.is-editable:hover { outline: 1px dashed rgba(36, 84, 191, 0.7); }
+.doc-img.is-editable { cursor: move; touch-action: none; }
+.doc-img.is-dragging { outline: 1px solid #2454bf; z-index: 8; }
+.doc-handle { position: absolute; z-index: 6; width: 10px; height: 10px; background: #2454bf; border: 2px solid #fff; border-radius: 3px; box-shadow: 0 1px 3px rgba(0,0,0,.3); touch-action: none; opacity: 0; transition: opacity .15s; }
+.doc-img.is-editable:hover .doc-handle, .doc-img.is-dragging .doc-handle { opacity: 1; }
+@media (hover: none) { .doc-handle { opacity: 1; } }
+.doc-handle-n, .doc-handle-s { left: calc(50% - 5px); cursor: ns-resize; }
+.doc-handle-e, .doc-handle-w { top: calc(50% - 5px); cursor: ew-resize; }
+.doc-handle-n, .doc-handle-ne, .doc-handle-nw { top: -5px; }
+.doc-handle-s, .doc-handle-se, .doc-handle-sw { bottom: -5px; }
+.doc-handle-e, .doc-handle-ne, .doc-handle-se { right: -5px; }
+.doc-handle-w, .doc-handle-nw, .doc-handle-sw { left: -5px; }
+.doc-handle-ne, .doc-handle-sw { cursor: nesw-resize; }
+.doc-handle-nw, .doc-handle-se { cursor: nwse-resize; }
+.doc-inline { position: absolute; z-index: 20; background: #fff; border: 1px solid #2454bf; border-radius: 6px; padding: 6px; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2); display: flex; flex-direction: column; gap: 4px; }
+.doc-inline input, .doc-inline textarea { font: 13px/1.4 inherit; font-family: inherit; border: 1px solid var(--line, #d0d9e7); border-radius: 4px; padding: 6px 8px; width: 100%; color: #263449; background: #fff; }
+.doc-inline small { font-size: 10.5px; color: #566278; }
+.doc-sign-box { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.doc-scales { display: flex; flex-direction: column; gap: 8px; }
+.doc-scale { display: grid; grid-template-columns: 170px 1fr 52px; align-items: center; gap: 10px; font-size: 13.5px; }
+.doc-scale b { text-align: right; font-weight: 600; }
+.doc-bank { display: flex; flex-direction: column; gap: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; }
+.doc-bank-row { display: flex; gap: 8px; align-items: center; }
+.doc-bank-row select { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 5px; padding: 9px 11px; font: inherit; }
+.doc-bank-new { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.doc-bank-new input { border: 1px solid var(--line); background: var(--bg); border-radius: 5px; padding: 8px 10px; font: inherit; min-width: 0; }
+.doc-bank-list { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.doc-bank-list > div { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+@media (max-width: 1100px) { .doc-editor { grid-template-columns: 1fr; } .doc-preview-wrap { position: static; } }

@@ -1,0 +1,27 @@
+.pw-draw-modes { display:flex; align-items:center; gap:3px; padding-right:10px; border-right:1px solid #e4e8f0; }
+.pw-draw-button { display:grid; place-items:center; width:36px; height:36px; border:0; background:transparent; color:#6b7690; border-radius:5px; flex-shrink:0; }
+.pw-draw-button:hover:not(:disabled),.pw-draw-button.active { color:#2c63e8; background:#edf2ff; }
+.pw-draw-button:disabled,.pw-board-tools button:disabled { opacity:.45; cursor:not-allowed; }
+.pw-pen-width { display:flex; align-items:center; gap:7px; color:#6b7690; }
+.pw-pen-width input { width:75px; max-width:100%; accent-color:#2c63e8; }
+.pw-pen-width output { font-size:11px; min-width:17px; text-align:right; font-variant-numeric:tabular-nums; }
+.pw-whiteboard-canvas { position:relative; overflow:hidden; touch-action:none; }
+.pw-whiteboard-canvas[aria-busy=true] { pointer-events:none; opacity:.85; }
+.pw-board-pen .react-flow__pane,.pw-board-pen .react-flow__node { cursor:crosshair; }
+.pw-board-eraser .react-flow__pane,.pw-board-eraser .react-flow__node { cursor:cell; }
+.pw-whiteboard-canvas:focus-visible { outline:2px solid #86a9ef; outline-offset:3px; }
+.pw-whiteboard-drawing { display:block; overflow:visible; pointer-events:none; }
+.pw-board-select .pw-whiteboard-drawing path { pointer-events:visiblePainted; cursor:grab; }
+.pw-whiteboard-drawing.selected { outline:1px dashed #7398e5; outline-offset:3px; }
+.pw-drawing-preview { position:absolute; top:0; left:0; width:1px; height:1px; overflow:visible; pointer-events:none; z-index:1001; }
+.pw-whiteboard-canvas .react-flow__node-drawing { background:transparent; border:0; }
+.pw-whiteboard-note .react-flow__handle { width:14px; height:14px; }
+.pw-whiteboard-note .react-flow__handle:hover { background:#2c63e8; }
+.pw-board-tools .pw-swatches { flex-shrink:0; }
+@media(max-width:600px) {
+  .pw-whiteboard-canvas .react-flow__minimap { display:none; }
+  .pw-board-tools { gap:12px 9px; }
+  .pw-draw-modes { padding-right:7px; }
+  .pw-pen-width input { width:64px; }
+  .pw-board-tools .pw-ink-swatches { border-right:0; padding-right:0; }
+}

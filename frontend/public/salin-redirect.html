@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Salin Redirect URI — CRM Maiharta</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  body { margin: 0; font-family: "Plus Jakarta Sans", sans-serif; background: #f4f6fb; color: #1b2337; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 60px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p.sub { margin: 0 0 28px; color: #5b6479; }
+  .box { background: #fff; border: 1px solid #e3e7f0; border-radius: 16px; padding: 22px; margin-bottom: 18px; box-shadow: 0 12px 30px -24px #2c63e855; }
+  .step { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: #2c63e8; color: #fff; font-weight: 700; font-size: 13px; margin-right: 8px; }
+  .url { display: block; margin: 14px 0; padding: 14px; border-radius: 10px; background: #eef3ff; border: 1.5px dashed #2c63e8; font-family: monospace; font-size: 15px; word-break: break-all; color: #123; }
+  button { border: 0; background: #2c63e8; color: #fff; font: inherit; font-weight: 700; padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: background-color .15s ease; }
+  button:hover { background: #2152cc; }
+  .ok { color: #0f9f6e; font-weight: 600; margin-left: 10px; display: none; }
+  /* tiruan halaman Google */
+  .g { border: 1px solid #dadce0; border-radius: 8px; padding: 18px; font-family: Roboto, Arial, sans-serif; background: #fff; }
+  .g h3 { margin: 0 0 4px; font-size: 15px; font-weight: 500; }
+  .g small { color: #5f6368; display: block; margin-bottom: 12px; }
+  .g .field { border: 2px solid #1a73e8; border-radius: 4px; padding: 10px; font-size: 13px; position: relative; }
+  .g .field label { position: absolute; top: -9px; left: 8px; background: #fff; padding: 0 4px; font-size: 11px; color: #1a73e8; }
+  .g .add { color: #1a73e8; font-size: 13px; font-weight: 500; margin-top: 10px; display: inline-block; }
+  .g .muted { opacity: .45; }
+  .g .save { margin-top: 18px; background: #1a73e8; border-radius: 4px; padding: 8px 18px; color: #fff; display: inline-block; font-size: 13px; }
+  .arrow { color: #e5484d; font-weight: 700; font-size: 13px; margin-left: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Salin alamat ini ke Google</h1>
+  <p class="sub">Untuk memperbaiki "Akses diblokir: Permintaan aplikasi ini tidak valid" saat Sign in with Google di n8n.</p>
+
+  <div class="box">
+    <div><span class="step">1</span><b>Klik tombol biru untuk menyalin</b></div>
+    <code class="url" id="u">https://&lt;domain-n8n-Anda&gt;.up.railway.app/rest/oauth2-credential/callback</code>
+    <button id="copy" type="button">Salin alamat</button><span class="ok" id="ok">Tersalin! Sekarang tempel (Ctrl+V) di Google.</span>
+  </div>
+
+  <div class="box">
+    <div style="margin-bottom:14px"><span class="step">2</span><b>Di Google Cloud → Clients → CRM Maiharta, tempel di sini (Ctrl+V)</b></div>
+    <div class="g">
+      <div class="muted">
+        <h3>Authorized JavaScript origins</h3>
+        <small>Biarkan kosong, jangan diisi</small>
+        <span class="add">+ Add URI</span>
+      </div>
+      <hr style="border:0;border-top:1px solid #eee;margin:18px 0" />
+      <h3>Authorized redirect URIs <span class="arrow">&larr; DI SINI</span></h3>
+      <small>For use with requests from a web server</small>
+      <div class="field"><label>URIs 1 *</label>https://&lt;domain-n8n-Anda&gt;.up.railway.app/rest/oauth2-credential/callback</div>
+      <span class="add">+ Add URI</span><span class="arrow">&larr; klik ini dulu kalau kolomnya belum muncul</span>
+      <div><span class="save">Save</span><span class="arrow">&larr; lalu klik Save di paling bawah</span></div>
+    </div>
+  </div>
+
+  <div class="box">
+    <div><span class="step">3</span><b>Tunggu 5 menit</b>, lalu di n8n klik <b>Sign in with Google</b> lagi.</div>
+  </div>
+</div>
+<script>
+  document.getElementById('copy').onclick = async () => {
+    const t = document.getElementById('u').textContent.trim();
+    try { await navigator.clipboard.writeText(t); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('u')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); }
+    document.getElementById('ok').style.display = 'inline';
+  };
+  document.querySelectorAll('[data-copy]').forEach((b) => b.onclick = async () => {
+    const id = b.dataset.copy, el = document.getElementById(id), t = el.textContent.trim();
+    try { await navigator.clipboard.writeText(t); }
+    catch (e) { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); }
+    document.getElementById('ok-' + id).style.display = 'inline';
+  });
+</script>
+</body>
+</html>
