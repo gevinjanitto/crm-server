@@ -1,0 +1,7 @@
+.pdf-pages-wrap { width: 100%; max-height: 72vh; max-height: 72svh; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; background: #dfe6f1; contain: content; transform: translateZ(0); }
+.pdf-pages { display: flex; flex-direction: column; gap: 8px; padding: 8px; }
+.pdf-page { display: block; width: 100%; height: auto; background: #fff; border-radius: 6px; box-shadow: 0 6px 16px -8px #0b1f3f88; }
+.pdf-pages-note { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 28px 16px; color: #173768; font-size: 14px; text-align: center; }
+.pdf-pages-note a { color: #173768; font-weight: 600; }
+.pdf-pages-wrap .spin { animation: pdf-spin 1s linear infinite; }
+@keyframes pdf-spin { to { transform: rotate(360deg); } }

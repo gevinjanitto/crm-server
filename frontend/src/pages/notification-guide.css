@@ -1,0 +1,22 @@
+.notification-guide-page { width:100%; min-width:0; }
+.guide-download { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); background:var(--surface); border-radius:6px; padding:9px 12px; font-size:12px; color:var(--blue); }
+.guide-download:hover { background:var(--blue-soft); }
+.notification-guide-content { max-width:1120px; width:100%; overflow-wrap:anywhere; color:var(--text); line-height:1.85; }
+.notification-guide-content h1 { font-size:24px; margin:26px 0 12px; }
+.notification-guide-content h2 { font-size:18px; padding-top:30px; margin:28px 0 14px; border-top:1px solid var(--line); }
+.notification-guide-content h3 { font-size:15px; margin:24px 0 12px; }
+.notification-guide-content h4 { font-size:14px; margin:20px 0 10px; }
+.notification-guide-content p { margin:12px 0; }
+.notification-guide-content a { color:var(--blue); text-decoration:underline; text-underline-offset:3px; }
+.notification-guide-content ul { list-style:disc; padding-left:22px; }
+.notification-guide-content ol { list-style:decimal; padding-left:22px; }
+.notification-guide-content li { margin:7px 0; }
+.notification-guide-content code { font-family:'JetBrains Mono',monospace; font-size:11px; background:var(--surface-2); border-radius:3px; padding:2px 4px; }
+.notification-guide-content pre { padding:18px; margin:16px 0; background:#15253b; color:#d4e6fb; border-radius:7px; overflow-x:auto; max-width:100%; white-space:pre-wrap; word-break:break-word; }
+.notification-guide-content pre code { background:transparent; padding:0; color:inherit; }
+.notification-guide-content blockquote { border-left:3px solid #458ae1; padding:4px 18px; color:var(--muted-text); background:var(--blue-soft); margin:18px 0; }
+.guide-table-wrap { width:100%; overflow-x:auto; margin:18px 0; }
+.notification-guide-content table { border-collapse:collapse; width:100%; min-width:600px; text-align:left; font-size:12px; }
+.notification-guide-content td,.notification-guide-content th { border:1px solid var(--line); padding:12px 14px; vertical-align:top; }
+.notification-guide-content th { background:var(--surface-2); font-weight:600; }
+@media (max-width:700px) { .notification-guide-page .page-head { flex-wrap:wrap; } .notification-guide-page .page-actions { justify-content:flex-start; } .notification-guide-content h1 { font-size:21px; } .notification-guide-content h2 { font-size:16px; } }

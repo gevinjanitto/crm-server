@@ -1,0 +1,30 @@
+.welcome-dialog { padding: 0 !important; overflow: hidden; max-width: 480px !important; border-radius: 18px !important; border: 1px solid #dfe6f0; }
+.welcome-dialog > button[type="button"]:last-child { color: #fff; opacity: .85; }
+.welcome-hero { position: relative; height: 128px; background: linear-gradient(135deg, #123367 0%, #1f4f8f 100%); display: flex; align-items: center; justify-content: center; }
+.welcome-hero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #2bb3c0; }
+.welcome-logo { width: 64px; height: 64px; object-fit: contain; filter: drop-shadow(0 6px 14px rgba(0,0,0,.25)); }
+.welcome-chip { position: absolute; left: 20px; top: 18px; display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px; border-radius: 999px; background: rgba(255,255,255,.14); color: #d7ecff; font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; }
+.welcome-body { padding: 24px 26px 24px; }
+.welcome-title { font-size: 20px !important; line-height: 1.35; color: #14284b; font-weight: 800 !important; margin: 0 0 6px; }
+.welcome-desc { font-size: 14px; color: #53617a; line-height: 1.6; margin: 0 0 18px; }
+.welcome-tips { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 10px; }
+.welcome-tips li { display: flex; gap: 12px; align-items: flex-start; padding: 11px 12px; border: 1px solid #e6ebf2; border-radius: 12px; background: #f8faff; transition: border-color .2s ease, background-color .2s ease; }
+.welcome-tips li:hover { border-color: #b9cdf7; background: #f1f6ff; }
+.welcome-tips b { display: block; font-size: 13.5px; color: #14284b; }
+.welcome-tips small { display: block; font-size: 12.5px; color: #6b7a90; line-height: 1.5; margin-top: 2px; }
+.welcome-tip-icon { flex-shrink: 0; width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; background: #e5edff; color: #2f5fe0; }
+.welcome-actions { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+.welcome-secondary { height: 37px; padding: 0 14px; border-radius: 8px; border: 1px solid #d6deea; background: #fff; color: #33445f; font-size: 14px; font-weight: 600; cursor: pointer; transition: background-color .2s ease, border-color .2s ease; }
+.welcome-secondary:hover { background: #f3f6fb; border-color: #c3cfe0; }
+.welcome-primary { display: inline-flex; align-items: center; border-radius: 8px; cursor: pointer; font-weight: 700; }
+.welcome-primary svg { transition: transform .2s ease; }
+.welcome-primary:hover svg { transform: translateX(3px); }
+.user-row-actions { justify-content: flex-end; }
+.user-delete-confirm { background: #d6404e !important; color: #fff !important; display: inline-flex; gap: 6px; align-items: center; }
+.user-delete-confirm:hover { background: #bd3341 !important; }
+@media (max-width: 520px) { .welcome-body { padding: 20px 18px; } .welcome-actions button { flex: 1; justify-content: center; } }
+.user-form-grid .form-field:has(select[name="role"]),
+.user-form-grid .form-field:has(select[name="client_id"]),
+.user-form-grid .form-field:has(input[name="active"]) { grid-column: 1 / -1; }
+.user-form-grid .form-field select[name="role"],
+.user-form-grid .form-field select[name="client_id"] { width: 100%; }

@@ -1,0 +1,632 @@
+/* Toolbar buttons — konsisten di desktop & mobile */
+.primary-button,
+.secondary-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+.secondary-button {
+  background: #fff;
+  border: 1px solid var(--line);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.secondary-button:hover {
+  border-color: #b9ccff;
+  background: #f6f8fd;
+}
+.primary-button:disabled,
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+.primary-button svg,
+.secondary-button svg {
+  flex-shrink: 0;
+}
+.page-head {
+  align-items: flex-start;
+}
+.page-actions {
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+.page-actions .icon-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.page-actions .status-badge {
+  height: 40px;
+  padding: 0 14px;
+}
+@media (max-width: 960px) {
+  .primary-button,
+  .secondary-button {
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13.5px;
+  }
+}
+@media (max-width: 700px) {
+  .page-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .page-head p {
+    max-width: none;
+  }
+  .page-actions {
+    width: 100%;
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+  .page-actions .secondary-button {
+    display: inline-flex;
+  }
+  .page-actions > .primary-button,
+  .page-actions > .secondary-button {
+    flex: 1 1 auto;
+  }
+}
+
+/* Login mobile — barong tampil utuh, footer di tengah */
+@media (max-width: 700px) {
+  .login-visual {
+    height: auto;
+    min-height: 400px;
+  }
+  .login-visual-copy {
+    max-width: 58%;
+    padding: 28px 22px 0;
+  }
+  .barong-stage {
+    position: absolute;
+    inset: 24px 0 0 40%;
+    min-height: 0;
+    display: block;
+  }
+  .barong-image {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    height: 100%;
+    width: 100%;
+    max-width: none;
+    object-fit: contain;
+    object-position: right bottom;
+  }
+  .barong-arch {
+    width: 78%;
+    height: 80%;
+    bottom: -16%;
+    right: 4%;
+  }
+  .visual-bottom {
+    justify-content: center;
+    font-size: 10px;
+  }
+  .panel-bottom {
+    justify-content: center;
+    text-align: center;
+  }
+  .panel-bottom > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+/* Notifikasi */
+.notif-wrap {
+  position: relative;
+}
+.notif-bell {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--surface-2);
+  color: var(--muted-text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s;
+}
+.notif-bell:hover,
+.notif-bell.open {
+  background: var(--blue-soft);
+  color: var(--blue);
+  border-color: #c9d7ff;
+}
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #e5484d;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  animation: notif-pop 0.3s ease;
+}
+@keyframes notif-pop {
+  from {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px -16px #0f1f4a40;
+  z-index: 60;
+  overflow: hidden;
+  animation: page-enter 0.2s ease;
+}
+.notif-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.notif-panel-head b {
+  font-size: 14.5px;
+}
+.notif-panel-head button {
+  background: none;
+  border: none;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.notif-list {
+  max-height: 420px;
+  overflow-y: auto;
+}
+.notif-item {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  padding: 13px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f1f4f9;
+  color: var(--text);
+  transition: background-color 0.15s;
+}
+.notif-item:hover {
+  background: #f6f8fd;
+}
+.notif-item.unread {
+  background: #f3f7ff;
+}
+.notif-item.unread:hover {
+  background: #eaf1ff;
+}
+.notif-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--blue-soft);
+  color: var(--blue);
+}
+.notif-icon.tiket {
+  background: #fff3d6;
+  color: #a06a10;
+}
+.notif-icon.penugasan,
+.notif-icon.task {
+  background: #e3f7ef;
+  color: #148a5f;
+}
+.notif-icon.keuangan {
+  background: #f3e8fb;
+  color: #8b4dbd;
+}
+.notif-body {
+  flex: 1;
+  min-width: 0;
+}
+.notif-body b {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+}
+.notif-body p {
+  font-size: 12.5px;
+  color: var(--muted-text);
+  margin-top: 3px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.notif-body time {
+  display: block;
+  font-size: 11px;
+  color: #98a2b8;
+  margin-top: 5px;
+}
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.notif-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--muted-text);
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.notif-panel-foot {
+  border-top: 1px solid var(--line);
+  padding: 11px;
+  text-align: center;
+}
+.notif-panel-foot a {
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+}
+.notif-page .notif-item {
+  padding: 16px 20px;
+}
+.notif-page .notif-body b {
+  font-size: 14.5px;
+}
+.notif-page .notif-body p {
+  font-size: 13.5px;
+  -webkit-line-clamp: 3;
+}
+.notif-item-remove {
+  background: none;
+  border: none;
+  color: #98a2b8;
+  padding: 4px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  align-self: flex-start;
+}
+.notif-item-remove:hover {
+  background: #ffe6ea;
+  color: #c62f48;
+}
+@media (max-width: 700px) {
+  .notif-panel {
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* Form tiket baru (client) */
+.ticket-create {
+  max-width: 1040px;
+}
+.ticket-create-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.ticket-create-head h1 {
+  font-size: 26px;
+  font-weight: 650;
+}
+.ticket-create-back {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-text);
+}
+.ticket-create-back:hover {
+  color: var(--blue);
+  border-color: #b9ccff;
+}
+.ticket-steps {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--blue);
+  font-weight: 600;
+  margin-bottom: 20px;
+}
+.ticket-steps > span {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--blue);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+.ticket-create .panel {
+  padding: 26px;
+}
+.ticket-create .panel-note {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 13px;
+  color: var(--muted-text);
+  margin-bottom: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ticket-create .panel-note b {
+  color: var(--text);
+}
+.ticket-grid {
+  display: grid;
+  grid-template-columns: 1fr 200px;
+  gap: 18px;
+}
+.ticket-grid .form-full {
+  grid-column: 1 / -1;
+}
+.form-hint {
+  font-size: 12px;
+  color: var(--muted-text);
+  margin-top: -8px;
+  line-height: 1.6;
+}
+.rte {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rte:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px #2c63e81a;
+}
+.rte-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  flex-wrap: wrap;
+}
+.rte-toolbar button {
+  height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  border-radius: 7px;
+  border: none;
+  background: none;
+  color: var(--muted-text);
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background-color 0.15s, color 0.15s;
+}
+.rte-toolbar button:hover {
+  background: #fff;
+  color: var(--blue);
+}
+.rte-toolbar i {
+  width: 1px;
+  height: 18px;
+  background: var(--line);
+  margin: 0 5px;
+}
+.rte-editor {
+  min-height: 220px;
+  padding: 14px 16px;
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--text);
+  outline: none;
+  overflow-wrap: anywhere;
+}
+.rte-editor:empty:before {
+  content: attr(data-placeholder);
+  color: #a4acbb;
+  pointer-events: none;
+}
+.rte-editor blockquote,
+.ticket-description blockquote {
+  border-left: 3px solid #c9d7ff;
+  margin: 8px 0;
+  padding: 4px 14px;
+  color: var(--muted-text);
+}
+.rte-editor code,
+.ticket-description code {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  background: var(--surface-2);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 0.92em;
+}
+.rte-editor ul,
+.rte-editor ol,
+.ticket-description ul,
+.ticket-description ol {
+  padding-left: 24px;
+  margin: 6px 0;
+}
+.rte-editor ul,
+.ticket-description ul {
+  list-style: disc;
+}
+.rte-editor ol,
+.ticket-description ol {
+  list-style: decimal;
+}
+.rte-editor a,
+.ticket-description a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+.attach-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.attach-btn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.attach-btn:hover {
+  border-color: #b9ccff;
+  color: var(--blue);
+}
+.attach-hint {
+  font-size: 12px;
+  color: var(--muted-text);
+}
+.attach-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.attach-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 8px 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  max-width: 100%;
+}
+.attach-chip span {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.attach-chip small {
+  color: var(--muted-text);
+}
+.attach-chip button {
+  border: none;
+  background: none;
+  color: #98a2b8;
+  display: inline-flex;
+  border-radius: 50%;
+  padding: 2px;
+}
+.attach-chip button:hover {
+  color: #c62f48;
+  background: #ffe6ea;
+}
+.attach-chip a {
+  color: var(--blue);
+  display: inline-flex;
+}
+.ticket-create .form-actions {
+  justify-content: flex-start;
+}
+.ticket-meta-line {
+  font-size: 12.5px;
+  color: var(--muted-text);
+  margin: 6px 0 12px;
+}
+@media (max-width: 700px) {
+  .ticket-grid {
+    grid-template-columns: 1fr;
+  }
+  .ticket-create .panel {
+    padding: 18px;
+  }
+  .ticket-create-head h1 {
+    font-size: 22px;
+  }
+  .rte-editor {
+    min-height: 170px;
+  }
+}
